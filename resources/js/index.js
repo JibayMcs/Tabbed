@@ -23,6 +23,25 @@ export default function tabbedManager(config = {}) {
             window.addEventListener('tabbed:close', (e) => {
                 this.removeTab(e.detail.id)
             })
+
+            // Keyboard shortcut: Ctrl+Alt+Click on elements with data-tabbed-* attributes
+            document.addEventListener('click', (e) => {
+                if (!(e.ctrlKey && e.altKey)) return
+
+                const target = e.target.closest('[data-tabbed-resource]')
+                if (!target) return
+
+                e.preventDefault()
+                e.stopPropagation()
+
+                const resource = target.dataset.tabbedResource
+                const page = target.dataset.tabbedPage || this.defaultPage
+                const recordId = target.dataset.tabbedRecord || null
+
+                if (resource) {
+                    this.addTab({ resource, page, recordId })
+                }
+            }, true)
         },
 
         loadFromStorage() {
@@ -31,24 +50,21 @@ export default function tabbedManager(config = {}) {
                 if (stored) {
                     const data = JSON.parse(stored)
                     this.tabs = data.tabs ?? []
-                    this.activeTabId = data.activeTabId ?? null
-
-                    if (this.activeTabId && !this.tabs.find(t => t.id === this.activeTabId)) {
-                        this.activeTabId = this.tabs.length > 0 ? this.tabs[0].id : null
-                    }
                 }
             } catch (e) {
                 console.warn('[Tabbed] Failed to load from localStorage:', e)
                 this.tabs = []
-                this.activeTabId = null
             }
+
+            // activeTabId is ephemeral - never restored from storage
+            // On page load, no tab is active = normal page content is visible
+            this.activeTabId = null
         },
 
         saveToStorage() {
             try {
                 localStorage.setItem(this.persistKey, JSON.stringify({
                     tabs: this.tabs,
-                    activeTabId: this.activeTabId,
                 }))
             } catch (e) {
                 console.warn('[Tabbed] Failed to save to localStorage:', e)
@@ -93,7 +109,7 @@ export default function tabbedManager(config = {}) {
             }
         },
 
-        addTab({ resource, page, recordId = null, label = null }) {
+        addTab({ resource, page, recordId = null, label = null, background = false }) {
             const existing = this.tabs.find(t =>
                 t.resource === resource &&
                 t.page === page &&
@@ -101,7 +117,9 @@ export default function tabbedManager(config = {}) {
             )
 
             if (existing) {
-                this.setActiveTab(existing.id)
+                if (!background) {
+                    this.setActiveTab(existing.id)
+                }
                 return existing
             }
 
@@ -123,10 +141,14 @@ export default function tabbedManager(config = {}) {
             tab.label = this.generateLabel(tab)
 
             this.tabs.push(tab)
-            this.activeTabId = tab.id
+
+            if (!background) {
+                this.activeTabId = tab.id
+                this.togglePageContent()
+            }
+
             this.saveToStorage()
             this.wireSyncTabs()
-            this.togglePageContent()
 
             this.$dispatch('tabbed:tab-opened', { tab })
 
@@ -181,11 +203,17 @@ export default function tabbedManager(config = {}) {
         },
 
         setActiveTab(tabId) {
-            if (this.tabs.find(t => t.id === tabId)) {
-                this.activeTabId = tabId
-                this.saveToStorage()
-                this.$dispatch('tabbed:tab-activated', { tabId })
+            if (!this.tabs.find(t => t.id === tabId)) return
+
+            if (this.activeTabId === tabId) {
+                // Re-clicking active tab deactivates it = show page content
+                this.activeTabId = null
+                this.$dispatch('tabbed:tab-deactivated', { tabId })
+                return
             }
+
+            this.activeTabId = tabId
+            this.$dispatch('tabbed:tab-activated', { tabId })
         },
 
         renameTab(tabId, newLabel) {
