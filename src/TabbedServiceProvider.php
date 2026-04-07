@@ -9,12 +9,12 @@ use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
 use Filament\Support\Facades\FilamentIcon;
 use Illuminate\Filesystem\Filesystem;
-use Livewire\Features\SupportTesting\Testable;
+use JibayMcs\Tabbed\Commands\TabbedCommand;
+use JibayMcs\Tabbed\Livewire\TabbedContainer;
+use Livewire\Livewire;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use JibayMcs\Tabbed\Commands\TabbedCommand;
-use JibayMcs\Tabbed\Testing\TestsTabbed;
 
 class TabbedServiceProvider extends PackageServiceProvider
 {
@@ -62,6 +62,9 @@ class TabbedServiceProvider extends PackageServiceProvider
 
     public function packageBooted(): void
     {
+        // Livewire component registration
+        Livewire::component('tabbed-container', TabbedContainer::class);
+
         // Asset Registration
         FilamentAsset::register(
             $this->getAssets(),
@@ -84,7 +87,6 @@ class TabbedServiceProvider extends PackageServiceProvider
                 ], 'tabbed-stubs');
             }
         }
-
     }
 
     protected function getAssetPackageName(): ?string

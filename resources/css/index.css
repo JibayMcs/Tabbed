@@ -117,3 +117,13 @@
     width: 0.875rem;
     height: 0.875rem;
 }
+
+/* Container */
+.fi-tabbed-container {
+    width: 100%;
+}
+
+/* Tab content panel */
+.fi-tabbed-panel {
+    width: 100%;
+}

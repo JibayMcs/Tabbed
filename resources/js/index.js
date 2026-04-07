@@ -9,6 +9,13 @@ export default function tabbedManager(config = {}) {
         init() {
             this.loadFromStorage()
 
+            // Sync initial tabs to Livewire
+            this.wireSyncTabs()
+
+            // Toggle page content visibility on state changes
+            this.$watch('activeTabId', () => this.togglePageContent())
+
+            // Listen for external events
             window.addEventListener('tabbed:open', (e) => {
                 this.addTab(e.detail)
             })
@@ -45,6 +52,23 @@ export default function tabbedManager(config = {}) {
                 }))
             } catch (e) {
                 console.warn('[Tabbed] Failed to save to localStorage:', e)
+            }
+        },
+
+        wireSyncTabs() {
+            if (this.$wire && this.tabs.length > 0) {
+                this.$wire.syncTabs(this.tabs)
+            }
+        },
+
+        togglePageContent() {
+            const shouldHide = this.hasTabs && this.activeTabId !== null
+
+            // Hide all sibling elements after the container
+            let sibling = this.$root.nextElementSibling
+            while (sibling) {
+                sibling.style.display = shouldHide ? 'none' : ''
+                sibling = sibling.nextElementSibling
             }
         },
 
@@ -99,8 +123,10 @@ export default function tabbedManager(config = {}) {
             tab.label = this.generateLabel(tab)
 
             this.tabs.push(tab)
-            this.setActiveTab(tab.id)
+            this.activeTabId = tab.id
             this.saveToStorage()
+            this.wireSyncTabs()
+            this.togglePageContent()
 
             this.$dispatch('tabbed:tab-opened', { tab })
 
@@ -127,6 +153,9 @@ export default function tabbedManager(config = {}) {
             }
 
             this.saveToStorage()
+            this.wireSyncTabs()
+            this.togglePageContent()
+
             this.$dispatch('tabbed:tab-closed', { tab: removedTab })
         },
 
@@ -135,6 +164,7 @@ export default function tabbedManager(config = {}) {
             this.activeTabId = tabId
             this.reindex()
             this.saveToStorage()
+            this.wireSyncTabs()
         },
 
         closeAllTabs() {
@@ -142,6 +172,8 @@ export default function tabbedManager(config = {}) {
             this.tabs = []
             this.activeTabId = null
             this.saveToStorage()
+            this.wireSyncTabs()
+            this.togglePageContent()
 
             if (hadTabs) {
                 this.$dispatch('tabbed:all-closed')
