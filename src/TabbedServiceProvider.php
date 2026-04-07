@@ -99,6 +99,7 @@ class TabbedServiceProvider extends PackageServiceProvider
     {
         return [
             AlpineComponent::make('tabbed', __DIR__ . '/../resources/dist/tabbed.js'),
+            Css::make('tabbed-styles', __DIR__ . '/../resources/dist/tabbed.css'),
         ];
     }
 

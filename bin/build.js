@@ -50,3 +50,11 @@ compile({
 }).then(() => {
     console.log(`Build completed for tabbed.js`)
 })
+
+compile({
+    ...defaultOptions,
+    entryPoints: ['./resources/css/index.css'],
+    outfile: './resources/dist/tabbed.css',
+}).then(() => {
+    console.log(`Build completed for tabbed.css`)
+})
