@@ -1,6 +1,6 @@
 <?php
 
-namespace VendorName\Skeleton;
+namespace JibayMcs\Tabbed;
 
 use Filament\Support\Assets\AlpineComponent;
 use Filament\Support\Assets\Asset;
@@ -13,14 +13,14 @@ use Livewire\Features\SupportTesting\Testable;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use VendorName\Skeleton\Commands\SkeletonCommand;
-use VendorName\Skeleton\Testing\TestsSkeleton;
+use JibayMcs\Tabbed\Commands\TabbedCommand;
+use JibayMcs\Tabbed\Testing\TestsTabbed;
 
-class SkeletonServiceProvider extends PackageServiceProvider
+class TabbedServiceProvider extends PackageServiceProvider
 {
-    public static string $name = 'skeleton';
+    public static string $name = 'tabbed';
 
-    public static string $viewNamespace = 'skeleton';
+    public static string $viewNamespace = 'tabbed';
 
     public function configurePackage(Package $package): void
     {
@@ -36,7 +36,7 @@ class SkeletonServiceProvider extends PackageServiceProvider
                     ->publishConfigFile()
                     ->publishMigrations()
                     ->askToRunMigrations()
-                    ->askToStarRepoOnGitHub(':vendor_slug/:package_slug');
+                    ->askToStarRepoOnGitHub('jibaymcs/tabbed');
             });
 
         $configFileName = $package->shortName();
@@ -80,18 +80,16 @@ class SkeletonServiceProvider extends PackageServiceProvider
         if (app()->runningInConsole()) {
             foreach (app(Filesystem::class)->files(__DIR__ . '/../stubs/') as $file) {
                 $this->publishes([
-                    $file->getRealPath() => base_path("stubs/skeleton/{$file->getFilename()}"),
-                ], 'skeleton-stubs');
+                    $file->getRealPath() => base_path("stubs/tabbed/{$file->getFilename()}"),
+                ], 'tabbed-stubs');
             }
         }
 
-        // Testing
-        Testable::mixin(new TestsSkeleton);
     }
 
     protected function getAssetPackageName(): ?string
     {
-        return ':vendor_slug/:package_slug';
+        return 'jibaymcs/tabbed';
     }
 
     /**
@@ -100,9 +98,9 @@ class SkeletonServiceProvider extends PackageServiceProvider
     protected function getAssets(): array
     {
         return [
-            // AlpineComponent::make('skeleton', __DIR__ . '/../resources/dist/components/skeleton.js'),
-            // Css::make('skeleton-styles', __DIR__ . '/../resources/dist/skeleton.css'),
-            // Js::make('skeleton-scripts', __DIR__ . '/../resources/dist/skeleton.js'),
+            // AlpineComponent::make('tabbed', __DIR__ . '/../resources/dist/components/tabbed.js'),
+            // Css::make('tabbed-styles', __DIR__ . '/../resources/dist/tabbed.css'),
+            // Js::make('tabbed-scripts', __DIR__ . '/../resources/dist/tabbed.js'),
         ];
     }
 
@@ -112,7 +110,7 @@ class SkeletonServiceProvider extends PackageServiceProvider
     protected function getCommands(): array
     {
         return [
-            SkeletonCommand::class,
+            TabbedCommand::class,
         ];
     }
 
@@ -146,7 +144,7 @@ class SkeletonServiceProvider extends PackageServiceProvider
     protected function getMigrations(): array
     {
         return [
-            'create_skeleton_table',
+            'create_tabbed_table',
         ];
     }
 }

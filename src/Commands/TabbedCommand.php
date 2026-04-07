@@ -1,12 +1,12 @@
 <?php
 
-namespace VendorName\Skeleton\Commands;
+namespace JibayMcs\Tabbed\Commands;
 
 use Illuminate\Console\Command;
 
-class SkeletonCommand extends Command
+class TabbedCommand extends Command
 {
-    public $signature = 'skeleton';
+    public $signature = 'tabbed';
 
     public $description = 'My command';
 

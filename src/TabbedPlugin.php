@@ -1,15 +1,15 @@
 <?php
 
-namespace VendorName\Skeleton;
+namespace JibayMcs\Tabbed;
 
 use Filament\Contracts\Plugin;
 use Filament\Panel;
 
-class SkeletonPlugin implements Plugin
+class TabbedPlugin implements Plugin
 {
     public function getId(): string
     {
-        return 'skeleton';
+        return 'tabbed';
     }
 
     public function register(Panel $panel): void
