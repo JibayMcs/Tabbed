@@ -98,9 +98,7 @@ class TabbedServiceProvider extends PackageServiceProvider
     protected function getAssets(): array
     {
         return [
-            // AlpineComponent::make('tabbed', __DIR__ . '/../resources/dist/components/tabbed.js'),
-            // Css::make('tabbed-styles', __DIR__ . '/../resources/dist/tabbed.css'),
-            // Js::make('tabbed-scripts', __DIR__ . '/../resources/dist/tabbed.js'),
+            AlpineComponent::make('tabbed', __DIR__ . '/../resources/dist/tabbed.js'),
         ];
     }
 
