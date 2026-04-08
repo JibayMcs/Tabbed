@@ -18,6 +18,12 @@ class OpenInTabAction extends Action
 
     protected ?\Closure $tabNameCallback = null;
 
+    protected ?string $tabColor = null;
+
+    protected ?string $tabBackground = null;
+
+    protected ?string $tabTextColor = null;
+
     public static function getDefaultName(): ?string
     {
         return 'tabbed';
@@ -60,6 +66,18 @@ class OpenInTabAction extends Action
             if ($this->tabNameCallback) {
                 $data['label'] = ($this->tabNameCallback)($record);
             }
+        }
+
+        if ($this->tabColor) {
+            $data['tabColor'] = $this->tabColor;
+        }
+
+        if ($this->tabBackground) {
+            $data['tabBackground'] = $this->tabBackground;
+        }
+
+        if ($this->tabTextColor) {
+            $data['tabTextColor'] = $this->tabTextColor;
         }
 
         $jsData = $hasJsData ? Js::from($data) : $data;
@@ -105,6 +123,43 @@ class OpenInTabAction extends Action
         $this->shouldActivate = !$condition;
 
         return $this;
+    }
+
+    public function tabColor(string|array $color): static
+    {
+        $this->tabColor = $this->resolveColor($color, 500);
+
+        return $this;
+    }
+
+    public function tabBackground(string|array $color): static
+    {
+        $this->tabBackground = $this->resolveColor($color, 50);
+
+        return $this;
+    }
+
+    public function tabTextColor(string|array $color): static
+    {
+        $this->tabTextColor = $this->resolveColor($color, 700);
+
+        return $this;
+    }
+
+    /**
+     * Resolve a color value to a CSS-usable string.
+     *
+     * Accepts:
+     * - A string (hex, rgb, rgba, oklch, named CSS color) — used as-is
+     * - A Filament Color palette array (e.g. Color::Red) — picks the given shade
+     */
+    private function resolveColor(string|array $color, int $shade = 500): string
+    {
+        if (is_string($color)) {
+            return $color;
+        }
+
+        return $color[$shade] ?? $color[500] ?? '';
     }
 
     public function getTabResource(): string

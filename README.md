@@ -17,6 +17,7 @@ A FilamentPHP v5 plugin that brings IDE/browser-style tabs to your panel. Open r
 - LocalStorage persistence across page navigations
 - Background tab opening
 - Custom tab labels
+- Custom tab colors (accent, background, text) with Filament Color support
 - Dark mode support
 - Translations: English & French
 
@@ -114,6 +115,33 @@ OpenInTabAction::make()
     ->background()                                    // Open tab without switching to it
     ->tabName(fn ($record) => $record->name)          // Custom tab label
     ->resource(UserResource::class)                   // Explicit resource (auto-detected by default)
+    ->tabColor(Color::Red)                            // Accent color (left border indicator)
+    ->tabBackground(Color::Red)                       // Background color
+    ->tabTextColor(Color::Red)                        // Text color
+```
+
+### Tab colors
+
+Customize tab appearance per action. Accepts Filament `Color` palettes, hex values, or any CSS color string:
+
+```php
+use Filament\Support\Colors\Color;
+
+// Filament Color palette (shade picked automatically)
+OpenInTabAction::make()
+    ->tabColor(Color::Red)                            // border: shade 500
+    ->tabBackground(Color::Red)                       // background: shade 50
+    ->tabTextColor(Color::Red)                        // text: shade 700
+
+// Specific shade from a palette
+OpenInTabAction::make()
+    ->tabColor(Color::Blue[600])
+
+// Hex, rgb, rgba
+OpenInTabAction::make()
+    ->tabColor('#ef4444')
+    ->tabBackground('rgba(254, 242, 242, 0.8)')
+    ->tabTextColor('#991b1b')
 ```
 
 ### JavaScript events
@@ -147,7 +175,6 @@ window.dispatchEvent(new CustomEvent('tabbed:close', {
 | `tabbed:tab-activated` | `{ tabId }` | A tab was activated |
 | `tabbed:tab-deactivated` | `{ tabId }` | Active tab was toggled off |
 | `tabbed:all-closed` | — | All tabs were closed |
-| `tabbed:max-reached` | `{ maxTabs }` | Max tab limit reached |
 
 ## Configuration
 
@@ -157,11 +184,11 @@ Configure via fluent methods in your `PanelProvider`:
 
 ```php
 TabbedPlugin::make()
-    ->maxTabs(15)                                           // Max simultaneous tabs (default: 20)
     ->defaultPage('view')                                   // Default page on open (default: edit)
     ->renderHook(PanelsRenderHook::TOPBAR_LOGO_AFTER)       // Tab bar position (default: PAGE_START)
     ->persistKey('my_panel_tabs')                            // localStorage key (default: tabbed_tabs)
     ->middleClickToClose()                                  // Close tabs with middle mouse button (default: off)
+    ->showTabIcons(false)                                   // Hide resource icons in tabs (default: true)
 ```
 
 ### Config file
@@ -175,7 +202,6 @@ php artisan vendor:publish --tag="tabbed-config"
 ```php
 // config/tabbed.php
 return [
-    'max_tabs' => 20,
     'default_page' => 'edit',
     'persist_key' => 'tabbed_tabs',
 ];

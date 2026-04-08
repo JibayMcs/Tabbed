@@ -28,6 +28,7 @@
                             'fi-drag-over-before': isDragOver(tab.id, 'before'),
                             'fi-drag-over-after': isDragOver(tab.id, 'after'),
                         }"
+                        :style="getTabStyle(tab)"
                         role="tab"
                         :aria-selected="isActive(tab.id)"
                         @click="setActiveTab(tab.id)"

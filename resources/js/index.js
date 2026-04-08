@@ -146,7 +146,7 @@ export default function tabbedManager(config = {}) {
             }
         },
 
-        addTab({ resource, page, recordId = null, label = null, background = false }) {
+        addTab({ resource, page, recordId = null, label = null, background = false, tabColor = null, tabBackground = null, tabTextColor = null }) {
             const existing = this.tabs.find(t =>
                 t.resource === resource &&
                 t.page === page &&
@@ -168,6 +168,9 @@ export default function tabbedManager(config = {}) {
                 page: page ?? this.defaultPage,
                 recordId: recordId ?? null,
                 order: this.tabs.length,
+                tabColor: tabColor ?? null,
+                tabBackground: tabBackground ?? null,
+                tabTextColor: tabTextColor ?? null,
             }
 
             tab.label = this.generateLabel(tab)
@@ -267,6 +270,14 @@ export default function tabbedManager(config = {}) {
 
         getTabLabel(tab) {
             return tab.customLabel ?? tab.label
+        },
+
+        getTabStyle(tab) {
+            const parts = []
+            if (tab.tabBackground) parts.push(`background-color: ${tab.tabBackground}`)
+            if (tab.tabTextColor) parts.push(`color: ${tab.tabTextColor}`)
+            if (tab.tabColor) parts.push(`border-left: 3px solid ${tab.tabColor}`)
+            return parts.join('; ')
         },
 
         moveTab(fromIndex, toIndex) {
