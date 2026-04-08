@@ -26,22 +26,6 @@ export default function tabbedManager(config = {}) {
             // Sync initial tabs to Livewire
             this.wireSyncTabs()
 
-            // Move tab bar to portal target
-            this.$nextTick(() => this.moveBarToPortal())
-
-            // Before navigation: move bar back so it survives @persist
-            document.addEventListener('livewire:navigate', () => {
-                const bar = document.querySelector('#fi-tabbed-bar-portal > .fi-tabbed-bar')
-                if (bar) {
-                    this.$root.prepend(bar)
-                }
-            })
-
-            // After navigation: re-move bar to new portal target
-            document.addEventListener('livewire:navigated', () => {
-                this.$nextTick(() => this.moveBarToPortal())
-            })
-
             // Toggle page content visibility on state changes
             this.$watch('activeTabId', () => this.togglePageContent())
 
@@ -123,20 +107,11 @@ export default function tabbedManager(config = {}) {
         togglePageContent() {
             const shouldHide = this.hasTabs && this.activeTabId !== null
 
-            // Account for @persist wrapper: navigate up to find siblings
-            const container = this.$root.closest('[x-persist]') || this.$root
-            let sibling = container.nextElementSibling
+            // Hide all sibling elements after the container
+            let sibling = this.$root.nextElementSibling
             while (sibling) {
                 sibling.style.display = shouldHide ? 'none' : ''
                 sibling = sibling.nextElementSibling
-            }
-        },
-
-        moveBarToPortal() {
-            const bar = this.$root.querySelector('.fi-tabbed-bar')
-            const portal = document.getElementById('fi-tabbed-bar-portal')
-            if (bar && portal) {
-                portal.appendChild(bar)
             }
         },
 

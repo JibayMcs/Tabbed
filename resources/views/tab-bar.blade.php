@@ -1,5 +1,3 @@
 @once('tabbed-container')
-    @persist('tabbed-container')
-        @livewire('tabbed-container')
-    @endpersist
+    @livewire('tabbed-container')
 @endonce
