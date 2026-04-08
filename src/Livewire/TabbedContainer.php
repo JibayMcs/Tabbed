@@ -18,6 +18,8 @@ class TabbedContainer extends Component
 
     public function syncTabs(array $tabs): array
     {
+        $previousLoadedIds = $this->loadedTabIds;
+
         $this->tabs = collect($tabs)
             ->filter(fn (array $tab) => $this->resolvePageClass($tab['resource'] ?? '', $tab['page'] ?? '') !== null)
             ->values()
@@ -30,6 +32,14 @@ class TabbedContainer extends Component
             // Clean up loaded IDs for tabs that no longer exist
             $validIds = array_column($this->tabs, 'id');
             $this->loadedTabIds = array_values(array_intersect($this->loadedTabIds, $validIds));
+        }
+
+        // Only re-render when new tabs need their Livewire component created.
+        // Skipping render prevents the parent morph from corrupting child
+        // components (e.g. Select::multiple() value duplication).
+        $newlyLoaded = array_diff($this->loadedTabIds, $previousLoadedIds);
+        if (empty($newlyLoaded)) {
+            $this->skipRender();
         }
 
         return $this->resolveTabIcons();

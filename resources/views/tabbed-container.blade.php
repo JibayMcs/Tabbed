@@ -167,6 +167,7 @@
             <div
                 x-show="isActive('{{ $tab['id'] }}')"
                 wire:key="tab-panel-{{ $tab['id'] }}"
+                wire:ignore
                 class="fi-tabbed-panel"
             >
                 @if(in_array($tab['page'] ?? '', ['edit', 'view']))
