@@ -13,8 +13,9 @@
     x-cloak
     class="fi-tabbed-container"
 >
-    {{-- Tab bar --}}
-    <div x-show="hasTabs" class="fi-tabbed-bar" x-transition:enter>
+    {{-- Tab bar — wire:ignore prevents Livewire from recreating on re-render --}}
+    <div wire:ignore>
+    <div x-show="hasTabs" class="fi-tabbed-bar">
         <div class="fi-tabbed-bar-tabs" role="tablist">
             <template x-for="tab in tabs" :key="tab.id">
                 <div
@@ -71,6 +72,7 @@
                 </div>
             </template>
         </div>
+    </div>
     </div>
 
     {{-- Context menu --}}

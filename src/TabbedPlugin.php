@@ -5,6 +5,7 @@ namespace JibayMcs\Tabbed;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
 use Filament\View\PanelsRenderHook;
+use Illuminate\Support\HtmlString;
 use JibayMcs\Tabbed\Livewire\TabbedContainer;
 
 class TabbedPlugin implements Plugin
@@ -18,14 +19,29 @@ class TabbedPlugin implements Plugin
 
     public function register(Panel $panel): void
     {
+        // Tab bar portal target — rendered at user-configured hook position
         $panel->renderHook(
             $this->getRenderHook(),
-            function (): \Illuminate\Contracts\View\View|string {
-                if (TabbedContainer::$rendered) {
+            function (): HtmlString|string {
+                if (TabbedContainer::$barRendered) {
                     return '';
                 }
 
-                TabbedContainer::$rendered = true;
+                TabbedContainer::$barRendered = true;
+
+                return new HtmlString('<div id="fi-tabbed-bar-portal"></div>');
+            },
+        );
+
+        // Tab content panels — always rendered at CONTENT_START (inside <main class="fi-main">)
+        $panel->renderHook(
+            PanelsRenderHook::CONTENT_START,
+            function (): \Illuminate\Contracts\View\View|string {
+                if (TabbedContainer::$contentRendered) {
+                    return '';
+                }
+
+                TabbedContainer::$contentRendered = true;
 
                 return view('tabbed::tab-bar');
             },

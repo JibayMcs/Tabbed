@@ -26,8 +26,21 @@ export default function tabbedManager(config = {}) {
             // Sync initial tabs to Livewire
             this.wireSyncTabs()
 
-            // Constrain tab bar width to parent
-            this.$nextTick(() => this.constrainBarWidth())
+            // Move tab bar to portal target
+            this.$nextTick(() => this.moveBarToPortal())
+
+            // Before navigation: move bar back so it survives @persist
+            document.addEventListener('livewire:navigate', () => {
+                const bar = document.querySelector('#fi-tabbed-bar-portal > .fi-tabbed-bar')
+                if (bar) {
+                    this.$root.prepend(bar)
+                }
+            })
+
+            // After navigation: re-move bar to new portal target
+            document.addEventListener('livewire:navigated', () => {
+                this.$nextTick(() => this.moveBarToPortal())
+            })
 
             // Toggle page content visibility on state changes
             this.$watch('activeTabId', () => this.togglePageContent())
@@ -110,34 +123,21 @@ export default function tabbedManager(config = {}) {
         togglePageContent() {
             const shouldHide = this.hasTabs && this.activeTabId !== null
 
-            // Hide all sibling elements after the container
-            let sibling = this.$root.nextElementSibling
+            // Account for @persist wrapper: navigate up to find siblings
+            const container = this.$root.closest('[x-persist]') || this.$root
+            let sibling = container.nextElementSibling
             while (sibling) {
                 sibling.style.display = shouldHide ? 'none' : ''
                 sibling = sibling.nextElementSibling
             }
         },
 
-        constrainBarWidth() {
+        moveBarToPortal() {
             const bar = this.$root.querySelector('.fi-tabbed-bar')
-            if (!bar) return
-
-            // Find the constraining ancestor (fi-main has the max-width)
-            const main = this.$root.closest('.fi-main')
-            const reference = main || this.$root.parentElement
-            if (!reference) return
-
-            const update = () => {
-                const style = getComputedStyle(reference)
-                const width = reference.clientWidth
-                    - parseFloat(style.paddingLeft)
-                    - parseFloat(style.paddingRight)
-                bar.style.maxWidth = width + 'px'
+            const portal = document.getElementById('fi-tabbed-bar-portal')
+            if (bar && portal) {
+                portal.appendChild(bar)
             }
-
-            update()
-            this._barResizeObserver = new ResizeObserver(update)
-            this._barResizeObserver.observe(reference)
         },
 
         generateId() {

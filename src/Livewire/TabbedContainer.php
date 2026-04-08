@@ -7,7 +7,9 @@ use Livewire\Component;
 
 class TabbedContainer extends Component
 {
-    public static bool $rendered = false;
+    public static bool $barRendered = false;
+
+    public static bool $contentRendered = false;
 
     public array $tabs = [];
 

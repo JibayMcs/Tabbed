@@ -7,13 +7,13 @@
     padding-inline: 0.5rem;
 }
 
-.fi-tabbed-bar::-webkit-scrollbar {
-    display: none;
+#fi-tabbed-bar-portal {
+    display: grid;
+    padding-left: 10px;
 }
 
-:is(.dark) .fi-tabbed-bar {
-    border-bottom-color: rgb(55 65 81); /* gray-700 */
-    background-color: rgb(31 41 55); /* gray-800 */
+.fi-tabbed-bar::-webkit-scrollbar {
+    display: none;
 }
 
 .fi-tabbed-bar-tabs {
