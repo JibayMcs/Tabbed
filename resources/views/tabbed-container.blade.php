@@ -5,6 +5,7 @@
         'persistKey' => $plugin->getPersistKey(),
         'defaultPage' => $plugin->getDefaultPage(),
         'middleClickToClose' => $plugin->getMiddleClickToClose(),
+        'showTabIcons' => $plugin->getShowTabIcons(),
     ];
 @endphp
 
@@ -40,6 +41,11 @@
                         @dragleave="onDragLeave($event, tab.id)"
                         @drop="onDrop($event, tab.id)"
                     >
+                        {{-- Icon --}}
+                        <template x-if="showTabIcons && tabIcons[tab.resource]">
+                            <span x-html="tabIcons[tab.resource]"></span>
+                        </template>
+
                         {{-- Label or rename input --}}
                         <template x-if="!isRenaming(tab.id)">
                             <span

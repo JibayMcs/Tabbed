@@ -71,6 +71,13 @@
     color: var(--primary-400);
 }
 
+/* Tab icon */
+.fi-tabbed-bar-tab-icon {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+}
+
 /* Tab label */
 .fi-tabbed-bar-tab-label {
     overflow: hidden;

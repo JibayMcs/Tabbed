@@ -6,6 +6,8 @@ export default function tabbedManager(config = {}) {
         persistKey: config.persistKey ?? 'tabbed_tabs',
         defaultPage: config.defaultPage ?? 'edit',
         middleClickToClose: config.middleClickToClose ?? false,
+        showTabIcons: config.showTabIcons ?? true,
+        tabIcons: {},
 
         // Drag & drop state
         dragTabId: null,
@@ -92,9 +94,12 @@ export default function tabbedManager(config = {}) {
             }
         },
 
-        wireSyncTabs() {
+        async wireSyncTabs() {
             if (this.$wire && this.tabs.length > 0) {
-                this.$wire.syncTabs(this.tabs)
+                const icons = await this.$wire.syncTabs(this.tabs)
+                if (icons && this.showTabIcons) {
+                    this.tabIcons = { ...this.tabIcons, ...icons }
+                }
             }
         },
 

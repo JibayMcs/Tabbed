@@ -20,6 +20,8 @@ class TabbedPlugin implements Plugin
 
     protected bool $middleClickToClose = false;
 
+    protected bool $showTabIcons = true;
+
     public function getId(): string
     {
         return 'tabbed';
@@ -119,6 +121,18 @@ class TabbedPlugin implements Plugin
     public function getMiddleClickToClose(): bool
     {
         return $this->middleClickToClose;
+    }
+
+    public function showTabIcons(bool $condition = true): static
+    {
+        $this->showTabIcons = $condition;
+
+        return $this;
+    }
+
+    public function getShowTabIcons(): bool
+    {
+        return $this->showTabIcons;
     }
 
     public static function make(): static
