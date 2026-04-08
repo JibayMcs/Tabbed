@@ -18,6 +18,8 @@ class TabbedPlugin implements Plugin
 
     protected ?string $persistKey = null;
 
+    protected bool $middleClickToClose = false;
+
     public function getId(): string
     {
         return 'tabbed';
@@ -105,6 +107,18 @@ class TabbedPlugin implements Plugin
     public function getPersistKey(): string
     {
         return $this->persistKey ?? config('tabbed.persist_key', 'tabbed_tabs');
+    }
+
+    public function middleClickToClose(bool $condition = true): static
+    {
+        $this->middleClickToClose = $condition;
+
+        return $this;
+    }
+
+    public function getMiddleClickToClose(): bool
+    {
+        return $this->middleClickToClose;
     }
 
     public static function make(): static

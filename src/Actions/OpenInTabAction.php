@@ -6,6 +6,7 @@ use Filament\Actions\Action;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Js;
 use JibayMcs\Tabbed\TabbedPlugin;
+use Livewire\Livewire;
 
 class OpenInTabAction extends Action
 {
@@ -19,45 +20,51 @@ class OpenInTabAction extends Action
 
     public static function getDefaultName(): ?string
     {
-        return 'open-in-tab';
+        return 'tabbed';
     }
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->label(__('tabbed::tabbed.open_in_tab'))
-            ->icon('heroicon-m-arrow-top-right-on-square')
-            ->color('gray')
-            ->alpineClickHandler(function (?Model $record = null): string {
-                $resource = $this->getTabResource();
-                $page = $this->getTabbedPage();
+        $this->label(__('tabbed::tabbed.open_in_tab'));
+        $this->icon('heroicon-m-arrow-top-right-on-square');
+        $this->color('gray');
 
-                $data = [
-                    'resource' => $resource,
-                    'page' => $page,
-                    'background' => ! $this->shouldActivate,
-                ];
+        $this->action(function (?Model $record = null, Action $action) {
+            $data = $this->constructTabData($record, false);
+            $action->getLivewire()->dispatch('tabbed:open', ...$data);
+        });
 
-                if ($record) {
-                    $data['recordId'] = $record->getKey();
+        $this->alpineClickHandler(function (?Model $record = null): string {
+            $jsData = $this->constructTabData($record);
+            return "window.dispatchEvent(new CustomEvent('tabbed:open', { detail: {$jsData} }))";
+        });
 
-                    if ($this->tabNameCallback) {
-                        $data['label'] = ($this->tabNameCallback)($record);
-                    }
-                }
+    }
 
-                $jsData = Js::from($data);
+    private function constructTabData(?Model $record = null, bool $hasJsData = true): Js|array
+    {
+        $resource = $this->getTabResource();
+        $page = $this->getTabbedPage();
 
-                return "window.dispatchEvent(new CustomEvent('tabbed:open', { detail: {$jsData} }))";
-            })
-            ->extraAttributes(function (?Model $record = null): array {
-                return [
-                    'data-tabbed-resource' => $this->getTabResource(),
-                    'data-tabbed-page' => $this->getTabbedPage(),
-                    'data-tabbed-record' => $record?->getKey(),
-                ];
-            });
+        $data = [
+            'resource' => $resource,
+            'page' => $page,
+            'background' => !$this->shouldActivate,
+        ];
+
+        if ($record) {
+            $data['recordId'] = $record->getKey();
+
+            if ($this->tabNameCallback) {
+                $data['label'] = ($this->tabNameCallback)($record);
+            }
+        }
+
+        $jsData = $hasJsData ? Js::from($data) : $data;
+
+        return $jsData;
     }
 
     public function tabbedPage(string $page): static
@@ -95,7 +102,7 @@ class OpenInTabAction extends Action
 
     public function background(bool $condition = true): static
     {
-        $this->shouldActivate = ! $condition;
+        $this->shouldActivate = !$condition;
 
         return $this;
     }

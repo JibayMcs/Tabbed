@@ -5,6 +5,7 @@ export default function tabbedManager(config = {}) {
         maxTabs: config.maxTabs ?? 20,
         persistKey: config.persistKey ?? 'tabbed_tabs',
         defaultPage: config.defaultPage ?? 'edit',
+        middleClickToClose: config.middleClickToClose ?? false,
 
         // Drag & drop state
         dragTabId: null,
@@ -29,7 +30,18 @@ export default function tabbedManager(config = {}) {
             // Toggle page content visibility on state changes
             this.$watch('activeTabId', () => this.togglePageContent())
 
-            // Listen for external events
+            // Livewire dispatch (server-side: row click, action via Livewire)
+            // Livewire.on passes named params as a flat object { resource, page, ... }
+            Livewire.on('tabbed:open', (data) => {
+                this.addTab(data)
+            })
+
+            Livewire.on('tabbed:close', ({ id }) => {
+                this.removeTab(id)
+            })
+
+            // CustomEvent dispatch (client-side: alpineClickHandler, JS API)
+            // CustomEvent wraps data in event.detail
             window.addEventListener('tabbed:open', (e) => {
                 this.addTab(e.detail)
             })
@@ -51,24 +63,6 @@ export default function tabbedManager(config = {}) {
                 }
             })
 
-            // Keyboard shortcut: Ctrl+Alt+Click on elements with data-tabbed-* attributes
-            document.addEventListener('click', (e) => {
-                if (!(e.ctrlKey && e.altKey)) return
-
-                const target = e.target.closest('[data-tabbed-resource]')
-                if (!target) return
-
-                e.preventDefault()
-                e.stopPropagation()
-
-                const resource = target.dataset.tabbedResource
-                const page = target.dataset.tabbedPage || this.defaultPage
-                const recordId = target.dataset.tabbedRecord || null
-
-                if (resource) {
-                    this.addTab({ resource, page, recordId })
-                }
-            }, true)
         },
 
         loadFromStorage() {
@@ -289,6 +283,14 @@ export default function tabbedManager(config = {}) {
 
         isActive(tabId) {
             return this.activeTabId === tabId
+        },
+
+        // --- Middle Click to Close ---
+
+        onMiddleClick(e, tabId) {
+            if (!this.middleClickToClose || e.button !== 1) return
+            e.preventDefault()
+            this.removeTab(tabId)
         },
 
         // --- Drag & Drop ---

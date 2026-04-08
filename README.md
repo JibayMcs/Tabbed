@@ -12,7 +12,7 @@ A FilamentPHP v5 plugin that brings IDE/browser-style tabs to your panel. Open r
 - Drag & drop tab reordering
 - Inline tab renaming (double-click)
 - Right-click context menu (rename, close, close others, close all)
-- Keyboard shortcut: `Ctrl+Alt+Click` on any record row
+- Middle-click to close tabs (opt-in)
 - Configurable tab bar position (topbar, page start, content start, etc.)
 - LocalStorage persistence across page navigations
 - Background tab opening
@@ -82,6 +82,30 @@ public static function table(Table $table): Table
 }
 ```
 
+### Option 3: Row click
+
+Make clicking a table row open the record in a tab instead of navigating to the edit page:
+
+```php
+public static function table(Table $table): Table
+{
+    return $table
+        ->recordUrl(null)
+        ->recordAction('tabbed')
+        ->recordActions([
+            OpenInTabAction::make()
+                ->hiddenLabel()
+                ->background()
+                ->tabName(fn ($record) => "Ticket #{$record->id}"),
+        ]);
+}
+```
+
+- `recordUrl(null)` — disables the default link on the row
+- `recordAction('tabbed')` — clicking a row triggers the `OpenInTabAction` via Livewire
+- `background()` — opens the tab without switching to it
+- `tabName()` — custom label for the tab
+
 ### Action options
 
 ```php
@@ -91,10 +115,6 @@ OpenInTabAction::make()
     ->tabName(fn ($record) => $record->name)          // Custom tab label
     ->resource(UserResource::class)                   // Explicit resource (auto-detected by default)
 ```
-
-### Keyboard shortcut
-
-Hold `Ctrl+Alt` and click on any table row that has `OpenInTabAction` to open it in a tab.
 
 ### JavaScript events
 
@@ -141,6 +161,7 @@ TabbedPlugin::make()
     ->defaultPage('view')                                   // Default page on open (default: edit)
     ->renderHook(PanelsRenderHook::TOPBAR_LOGO_AFTER)       // Tab bar position (default: PAGE_START)
     ->persistKey('my_panel_tabs')                            // localStorage key (default: tabbed_tabs)
+    ->middleClickToClose()                                  // Close tabs with middle mouse button (default: off)
 ```
 
 ### Config file

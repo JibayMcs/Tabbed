@@ -4,6 +4,7 @@
         'maxTabs' => $plugin->getMaxTabs(),
         'persistKey' => $plugin->getPersistKey(),
         'defaultPage' => $plugin->getDefaultPage(),
+        'middleClickToClose' => $plugin->getMiddleClickToClose(),
     ];
 @endphp
 
@@ -29,6 +30,7 @@
                         role="tab"
                         :aria-selected="isActive(tab.id)"
                         @click="setActiveTab(tab.id)"
+                        @auxclick="onMiddleClick($event, tab.id)"
                         @contextmenu="openContextMenu($event, tab.id)"
                         @dblclick="startRename(tab.id)"
                         draggable="true"
