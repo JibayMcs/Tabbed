@@ -369,14 +369,36 @@ export default function tabbedManager(config = {}) {
             if (!container) return
 
             const tabEls = container.querySelectorAll('.fi-tabbed-bar-tab')
+            const overflowEl = container.parentElement?.querySelector('.fi-tabbed-bar-overflow')
 
             // Show all tabs to measure accurately
             tabEls.forEach(el => el.classList.remove('fi-tabbed-overflow-hidden'))
 
-            // Force reflow then check
+            // The button always takes layout space (visibility:hidden).
+            // containerRight is already reduced by the button's width.
+            // Calculate fullRight = the true available width without the button.
             const containerRight = container.getBoundingClientRect().right
+            const buttonWidth = overflowEl ? overflowEl.getBoundingClientRect().width : 0
+            const fullRight = containerRight + buttonWidth
 
-            // Find the first tab that doesn't fully fit
+            // Do tabs overflow the FULL available width (without button)?
+            let anyOverflow = false
+            for (let i = 0; i < tabEls.length; i++) {
+                if (tabEls[i].getBoundingClientRect().right > fullRight) {
+                    anyOverflow = true
+                    break
+                }
+            }
+
+            if (!anyOverflow) {
+                this.hasOverflow = false
+                this.overflowTabs = []
+                return
+            }
+
+            // True overflow — find cut point WITH button space (containerRight)
+            this.hasOverflow = true
+
             let cutIndex = -1
             for (let i = 0; i < tabEls.length; i++) {
                 if (tabEls[i].getBoundingClientRect().right > containerRight) {
@@ -385,19 +407,12 @@ export default function tabbedManager(config = {}) {
                 }
             }
 
-            if (cutIndex === -1) {
-                this.hasOverflow = false
-                this.overflowTabs = []
-                return
-            }
+            if (cutIndex === -1) cutIndex = tabEls.length - 1
 
-            // Hide everything from cutIndex onwards
-            this.hasOverflow = true
             for (let i = cutIndex; i < tabEls.length; i++) {
                 tabEls[i].classList.add('fi-tabbed-overflow-hidden')
             }
 
-            // Build overflow list from data (not DOM)
             this.overflowTabs = this.tabs.slice(cutIndex)
         },
 
