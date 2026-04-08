@@ -5,6 +5,7 @@ namespace JibayMcs\Tabbed;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
 use Filament\View\PanelsRenderHook;
+use JibayMcs\Tabbed\Livewire\TabbedContainer;
 
 class TabbedPlugin implements Plugin
 {
@@ -19,7 +20,15 @@ class TabbedPlugin implements Plugin
     {
         $panel->renderHook(
             $this->getRenderHook(),
-            fn (): \Illuminate\Contracts\View\View => view('tabbed::tab-bar'),
+            function (): \Illuminate\Contracts\View\View|string {
+                if (TabbedContainer::$rendered) {
+                    return '';
+                }
+
+                TabbedContainer::$rendered = true;
+
+                return view('tabbed::tab-bar');
+            },
         );
     }
 

@@ -6,11 +6,28 @@ export default function tabbedManager(config = {}) {
         persistKey: config.persistKey ?? 'tabbed_tabs',
         defaultPage: config.defaultPage ?? 'edit',
 
+        // Drag & drop state
+        dragTabId: null,
+        dragOverTabId: null,
+        dragPosition: null, // 'before' | 'after'
+
+        // Rename state
+        renamingTabId: null,
+        renameValue: '',
+
+        // Context menu state
+        contextMenuTabId: null,
+        contextMenuX: 0,
+        contextMenuY: 0,
+
         init() {
             this.loadFromStorage()
 
             // Sync initial tabs to Livewire
             this.wireSyncTabs()
+
+            // Constrain tab bar width to parent
+            this.$nextTick(() => this.constrainBarWidth())
 
             // Toggle page content visibility on state changes
             this.$watch('activeTabId', () => this.togglePageContent())
@@ -22,6 +39,19 @@ export default function tabbedManager(config = {}) {
 
             window.addEventListener('tabbed:close', (e) => {
                 this.removeTab(e.detail.id)
+            })
+
+            // Close context menu on click anywhere
+            document.addEventListener('click', () => {
+                this.closeContextMenu()
+            })
+
+            // Close context menu on Escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    this.closeContextMenu()
+                    this.cancelRename()
+                }
             })
 
             // Keyboard shortcut: Ctrl+Alt+Click on elements with data-tabbed-* attributes
@@ -86,6 +116,28 @@ export default function tabbedManager(config = {}) {
                 sibling.style.display = shouldHide ? 'none' : ''
                 sibling = sibling.nextElementSibling
             }
+        },
+
+        constrainBarWidth() {
+            const bar = this.$root.querySelector('.fi-tabbed-bar')
+            if (!bar) return
+
+            // Find the constraining ancestor (fi-main has the max-width)
+            const main = this.$root.closest('.fi-main')
+            const reference = main || this.$root.parentElement
+            if (!reference) return
+
+            const update = () => {
+                const style = getComputedStyle(reference)
+                const width = reference.clientWidth
+                    - parseFloat(style.paddingLeft)
+                    - parseFloat(style.paddingRight)
+                bar.style.maxWidth = width + 'px'
+            }
+
+            update()
+            this._barResizeObserver = new ResizeObserver(update)
+            this._barResizeObserver.observe(reference)
         },
 
         generateId() {
@@ -262,6 +314,172 @@ export default function tabbedManager(config = {}) {
 
         isActive(tabId) {
             return this.activeTabId === tabId
+        },
+
+        // --- Drag & Drop ---
+
+        onDragStart(e, tabId) {
+            this.dragTabId = tabId
+            e.dataTransfer.effectAllowed = 'move'
+            e.dataTransfer.setData('text/plain', tabId)
+
+            // Make the drag image slightly transparent
+            if (e.target) {
+                e.target.style.opacity = '0.5'
+            }
+        },
+
+        onDragEnd(e) {
+            if (e.target) {
+                e.target.style.opacity = ''
+            }
+            this.dragTabId = null
+            this.dragOverTabId = null
+            this.dragPosition = null
+        },
+
+        onDragOver(e, tabId) {
+            if (!this.dragTabId || this.dragTabId === tabId) return
+
+            e.preventDefault()
+            e.dataTransfer.dropEffect = 'move'
+
+            const rect = e.currentTarget.getBoundingClientRect()
+            const midX = rect.left + rect.width / 2
+
+            this.dragOverTabId = tabId
+            this.dragPosition = e.clientX < midX ? 'before' : 'after'
+        },
+
+        onDragLeave(e, tabId) {
+            if (this.dragOverTabId === tabId) {
+                this.dragOverTabId = null
+                this.dragPosition = null
+            }
+        },
+
+        onDrop(e, tabId) {
+            e.preventDefault()
+
+            if (!this.dragTabId || this.dragTabId === tabId) return
+
+            const fromIndex = this.tabs.findIndex(t => t.id === this.dragTabId)
+            let toIndex = this.tabs.findIndex(t => t.id === tabId)
+
+            if (fromIndex === -1 || toIndex === -1) return
+
+            // Adjust target index based on drop position
+            if (this.dragPosition === 'after') {
+                toIndex = fromIndex < toIndex ? toIndex : toIndex + 1
+            } else {
+                toIndex = fromIndex < toIndex ? toIndex - 1 : toIndex
+            }
+
+            this.moveTab(fromIndex, toIndex)
+
+            this.dragTabId = null
+            this.dragOverTabId = null
+            this.dragPosition = null
+        },
+
+        isDragOver(tabId, position) {
+            return this.dragOverTabId === tabId && this.dragPosition === position
+        },
+
+        // --- Inline Rename ---
+
+        startRename(tabId) {
+            const tab = this.tabs.find(t => t.id === tabId)
+            if (!tab) return
+
+            this.renamingTabId = tabId
+            this.renameValue = tab.customLabel ?? tab.label
+
+            // Focus the input after Alpine renders it
+            this.$nextTick(() => {
+                const input = this.$root.querySelector(`[data-rename-input="${tabId}"]`)
+                if (input) {
+                    input.focus()
+                    input.select()
+                }
+            })
+        },
+
+        confirmRename() {
+            if (!this.renamingTabId) return
+
+            const trimmed = this.renameValue.trim()
+            this.renameTab(this.renamingTabId, trimmed || null)
+
+            this.renamingTabId = null
+            this.renameValue = ''
+        },
+
+        cancelRename() {
+            this.renamingTabId = null
+            this.renameValue = ''
+        },
+
+        isRenaming(tabId) {
+            return this.renamingTabId === tabId
+        },
+
+        // --- Context Menu ---
+
+        openContextMenu(e, tabId) {
+            e.preventDefault()
+            e.stopPropagation()
+
+            this.contextMenuTabId = tabId
+            this.contextMenuX = e.clientX
+            this.contextMenuY = e.clientY
+
+            // Adjust position if menu would overflow viewport
+            this.$nextTick(() => {
+                const menu = this.$root.querySelector('[data-context-menu]')
+                if (!menu) return
+
+                const rect = menu.getBoundingClientRect()
+                const viewportW = window.innerWidth
+                const viewportH = window.innerHeight
+
+                if (rect.right > viewportW) {
+                    this.contextMenuX = viewportW - rect.width - 8
+                }
+                if (rect.bottom > viewportH) {
+                    this.contextMenuY = viewportH - rect.height - 8
+                }
+            })
+        },
+
+        closeContextMenu() {
+            this.contextMenuTabId = null
+        },
+
+        get showContextMenu() {
+            return this.contextMenuTabId !== null
+        },
+
+        contextMenuAction(action) {
+            const tabId = this.contextMenuTabId
+            this.closeContextMenu()
+
+            if (!tabId) return
+
+            switch (action) {
+                case 'rename':
+                    this.startRename(tabId)
+                    break
+                case 'close':
+                    this.removeTab(tabId)
+                    break
+                case 'close-others':
+                    this.closeOtherTabs(tabId)
+                    break
+                case 'close-all':
+                    this.closeAllTabs()
+                    break
+            }
         },
     }
 }

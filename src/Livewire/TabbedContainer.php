@@ -7,6 +7,8 @@ use Livewire\Component;
 
 class TabbedContainer extends Component
 {
+    public static bool $rendered = false;
+
     public array $tabs = [];
 
     public function syncTabs(array $tabs): void
