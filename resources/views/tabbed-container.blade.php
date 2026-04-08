@@ -1,7 +1,6 @@
 @php
     $plugin = \JibayMcs\Tabbed\TabbedPlugin::get();
     $config = [
-        'maxTabs' => $plugin->getMaxTabs(),
         'persistKey' => $plugin->getPersistKey(),
         'defaultPage' => $plugin->getDefaultPage(),
         'middleClickToClose' => $plugin->getMiddleClickToClose(),
@@ -23,6 +22,7 @@
                 <template x-for="tab in tabs" :key="tab.id">
                     <div
                         class="fi-tabbed-bar-tab"
+                        :data-tab-id="tab.id"
                         :class="{
                             'fi-active': isActive(tab.id),
                             'fi-drag-over-before': isDragOver(tab.id, 'before'),
@@ -81,6 +81,47 @@
                     </div>
                 </template>
             </div>
+
+            {{-- Overflow button — always in layout, visibility toggled --}}
+            <div class="fi-tabbed-bar-overflow" :style="hasOverflow ? '' : 'visibility: hidden'">
+                <button
+                    type="button"
+                    class="fi-tabbed-bar-overflow-btn"
+                    @click.stop="toggleOverflowMenu($event)"
+                    aria-label="{{ __('tabbed::tabbed.all_tabs') }}"
+                >
+                    <x-filament::icon icon="heroicon-m-ellipsis-horizontal" class="fi-tabbed-bar-overflow-icon" />
+                </button>
+            </div>
+        </div>
+    </template>
+
+    {{-- Overflow dropdown — teleported to body to escape topbar clip --}}
+    <template x-teleport="body">
+        <div
+            x-show="showOverflowMenu"
+            x-cloak
+            x-transition:enter="transition ease-out duration-100"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-75"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            class="fi-tabbed-overflow-menu"
+            :style="`left: ${overflowMenuX}px; top: ${overflowMenuY}px`"
+            @click.stop
+        >
+            <template x-for="tab in overflowTabs" :key="'overflow-' + tab.id">
+                <button
+                    type="button"
+                    class="fi-tabbed-overflow-menu-item"
+                    :class="{ 'fi-active': isActive(tab.id) }"
+                    @click="setActiveTab(tab.id); closeOverflowMenu()"
+                >
+                    <span x-show="showTabIcons && tabIcons[tab.resource]" x-html="tabIcons[tab.resource]"></span>
+                    <span class="fi-tabbed-overflow-menu-item-label" x-text="getTabLabel(tab)"></span>
+                </button>
+            </template>
         </div>
     </template>
 

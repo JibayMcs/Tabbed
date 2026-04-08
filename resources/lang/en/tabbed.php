@@ -7,4 +7,5 @@ return [
     'close' => 'Close',
     'close_others' => 'Close others',
     'close_all' => 'Close all',
+    'all_tabs' => 'All tabs',
 ];

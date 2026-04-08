@@ -12,8 +12,6 @@ class TabbedPlugin implements Plugin
 {
     protected string $renderHookName = PanelsRenderHook::PAGE_START;
 
-    protected ?int $maxTabs = null;
-
     protected ?string $defaultPage = null;
 
     protected ?string $persistKey = null;
@@ -73,18 +71,6 @@ class TabbedPlugin implements Plugin
     public function getRenderHook(): string
     {
         return $this->renderHookName;
-    }
-
-    public function maxTabs(int $maxTabs): static
-    {
-        $this->maxTabs = $maxTabs;
-
-        return $this;
-    }
-
-    public function getMaxTabs(): int
-    {
-        return $this->maxTabs ?? config('tabbed.max_tabs', 20);
     }
 
     public function defaultPage(string $defaultPage): static

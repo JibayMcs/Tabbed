@@ -7,4 +7,5 @@ return [
     'close' => 'Fermer',
     'close_others' => 'Fermer les autres',
     'close_all' => 'Tout fermer',
+    'all_tabs' => 'Tous les onglets',
 ];

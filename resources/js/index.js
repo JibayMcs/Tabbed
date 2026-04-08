@@ -2,7 +2,6 @@ export default function tabbedManager(config = {}) {
     return {
         tabs: [],
         activeTabId: null,
-        maxTabs: config.maxTabs ?? 20,
         persistKey: config.persistKey ?? 'tabbed_tabs',
         defaultPage: config.defaultPage ?? 'edit',
         middleClickToClose: config.middleClickToClose ?? false,
@@ -23,6 +22,13 @@ export default function tabbedManager(config = {}) {
         contextMenuX: 0,
         contextMenuY: 0,
 
+        // Overflow menu state
+        showOverflowMenu: false,
+        overflowMenuX: 0,
+        overflowMenuY: 0,
+        hasOverflow: false,
+        overflowTabs: [],
+
         init() {
             this.loadFromStorage()
 
@@ -31,6 +37,9 @@ export default function tabbedManager(config = {}) {
 
             // Toggle page content visibility on state changes
             this.$watch('activeTabId', () => this.togglePageContent())
+
+            // Observe tab bar DOM to detect overflow
+            this.setupOverflowObserver()
 
             // Livewire dispatch (server-side: row click, action via Livewire)
             // Livewire.on passes named params as a flat object { resource, page, ... }
@@ -52,15 +61,17 @@ export default function tabbedManager(config = {}) {
                 this.removeTab(e.detail.id)
             })
 
-            // Close context menu on click anywhere
+            // Close menus on click anywhere
             document.addEventListener('click', () => {
                 this.closeContextMenu()
+                this.closeOverflowMenu()
             })
 
-            // Close context menu on Escape
+            // Close menus on Escape
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
                     this.closeContextMenu()
+                    this.closeOverflowMenu()
                     this.cancelRename()
                 }
             })
@@ -149,11 +160,6 @@ export default function tabbedManager(config = {}) {
                 return existing
             }
 
-            if (this.tabs.length >= this.maxTabs) {
-                this.$dispatch('tabbed:max-reached', { maxTabs: this.maxTabs })
-                return null
-            }
-
             const tab = {
                 id: this.generateId(),
                 label: null,
@@ -175,6 +181,7 @@ export default function tabbedManager(config = {}) {
 
             this.saveToStorage()
             this.wireSyncTabs()
+            this.$nextTick(() => this.recalcOverflow())
 
             this.$dispatch('tabbed:tab-opened', { tab })
 
@@ -203,6 +210,7 @@ export default function tabbedManager(config = {}) {
             this.saveToStorage()
             this.wireSyncTabs()
             this.togglePageContent()
+            this.$nextTick(() => this.recalcOverflow())
 
             this.$dispatch('tabbed:tab-closed', { tab: removedTab })
         },
@@ -213,6 +221,7 @@ export default function tabbedManager(config = {}) {
             this.reindex()
             this.saveToStorage()
             this.wireSyncTabs()
+            this.$nextTick(() => this.recalcOverflow())
         },
 
         closeAllTabs() {
@@ -222,6 +231,7 @@ export default function tabbedManager(config = {}) {
             this.saveToStorage()
             this.wireSyncTabs()
             this.togglePageContent()
+            this.$nextTick(() => this.recalcOverflow())
 
             if (hadTabs) {
                 this.$dispatch('tabbed:all-closed')
@@ -268,6 +278,7 @@ export default function tabbedManager(config = {}) {
             this.tabs.splice(toIndex, 0, moved)
             this.reindex()
             this.saveToStorage()
+            this.$nextTick(() => this.recalcOverflow())
         },
 
         reindex() {
@@ -288,6 +299,115 @@ export default function tabbedManager(config = {}) {
 
         isActive(tabId) {
             return this.activeTabId === tabId
+        },
+
+        // --- Overflow Menu ---
+
+        setupOverflowObserver() {
+            const trySetup = () => {
+                const container = document.querySelector('.fi-tabbed-bar-tabs')
+                if (!container) {
+                    setTimeout(trySetup, 100)
+                    return
+                }
+
+                this._overflowContainer = container
+
+                let rafId = null
+                const scheduleUpdate = () => {
+                    if (rafId) cancelAnimationFrame(rafId)
+                    rafId = requestAnimationFrame(() => {
+                        rafId = null
+                        this.recalcOverflow()
+                    })
+                }
+
+                new ResizeObserver(scheduleUpdate).observe(container)
+                new MutationObserver(scheduleUpdate)
+                    .observe(container, { childList: true, subtree: true })
+
+                scheduleUpdate()
+            }
+
+            setTimeout(trySetup, 100)
+        },
+
+        recalcOverflow() {
+            const container = this._overflowContainer
+            if (!container) return
+
+            const tabEls = container.querySelectorAll('.fi-tabbed-bar-tab')
+
+            // Show all tabs to measure accurately
+            tabEls.forEach(el => el.classList.remove('fi-tabbed-overflow-hidden'))
+
+            // Force reflow then check
+            const containerRight = container.getBoundingClientRect().right
+
+            // Find the first tab that doesn't fully fit
+            let cutIndex = -1
+            for (let i = 0; i < tabEls.length; i++) {
+                if (tabEls[i].getBoundingClientRect().right > containerRight) {
+                    cutIndex = i
+                    break
+                }
+            }
+
+            if (cutIndex === -1) {
+                this.hasOverflow = false
+                this.overflowTabs = []
+                return
+            }
+
+            // Hide everything from cutIndex onwards
+            this.hasOverflow = true
+            for (let i = cutIndex; i < tabEls.length; i++) {
+                tabEls[i].classList.add('fi-tabbed-overflow-hidden')
+            }
+
+            // Build overflow list from data (not DOM)
+            this.overflowTabs = this.tabs.slice(cutIndex)
+        },
+
+        toggleOverflowMenu(e) {
+            if (this.showOverflowMenu) {
+                this.closeOverflowMenu()
+                return
+            }
+
+            if (this.overflowTabs.length === 0) return
+
+            const btn = e.currentTarget
+            const rect = btn.getBoundingClientRect()
+
+            this.overflowMenuY = rect.bottom + 4
+            this.showOverflowMenu = true
+
+            // Position so right edge of menu aligns with right edge of button
+            this.$nextTick(() => {
+                const menu = document.querySelector('.fi-tabbed-overflow-menu')
+                if (!menu) return
+
+                const menuRect = menu.getBoundingClientRect()
+                const viewportW = window.innerWidth
+                const viewportH = window.innerHeight
+
+                this.overflowMenuX = rect.right - menuRect.width
+
+                if (this.overflowMenuX < 8) {
+                    this.overflowMenuX = 8
+                }
+                if (rect.right > viewportW) {
+                    this.overflowMenuX = viewportW - menuRect.width - 8
+                }
+                if (menuRect.bottom > viewportH) {
+                    this.overflowMenuY = rect.top - menuRect.height - 4
+                }
+            })
+        },
+
+        closeOverflowMenu() {
+            this.showOverflowMenu = false
         },
 
         // --- Middle Click to Close ---

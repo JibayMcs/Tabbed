@@ -1,28 +1,27 @@
 .fi-tabbed-bar {
-    overflow-x: auto;
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE/Edge */
-    /*border-bottom: 1px solid rgb(229 231 235); !* gray-200 *!*/
-    /*background-color: rgb(249 250 251); !* gray-50 *!*/
+    display: flex;
+    align-items: stretch;
+    min-width: 0;
     padding-inline: 0.5rem;
 }
 
 #fi-tabbed-bar-portal {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
     padding-left: 10px;
-}
-
-.fi-tabbed-bar::-webkit-scrollbar {
-    display: none;
 }
 
 .fi-tabbed-bar-tabs {
     display: flex;
     align-items: stretch;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
     gap: 0.125rem;
     padding-block: 0.375rem;
-    width: max-content;
-    min-width: 100%;
 }
 
 /* Tab */
@@ -115,6 +114,11 @@
 .fi-tabbed-bar-tab-close-icon {
     width: 0.875rem;
     height: 0.875rem;
+}
+
+/* Hidden overflow tabs (moved to dropdown) */
+.fi-tabbed-bar-tab.fi-tabbed-overflow-hidden {
+    display: none !important;
 }
 
 /* Drag & drop indicators */
@@ -231,6 +235,112 @@
 
 :is(.dark) .fi-tabbed-context-menu-separator {
     background-color: rgb(55 65 81); /* gray-700 */
+}
+
+/* Overflow button */
+.fi-tabbed-bar-overflow {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    padding-inline: 0.25rem;
+}
+
+.fi-tabbed-bar-overflow-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.375rem;
+    border-radius: 0.375rem;
+    color: rgb(107 114 128); /* gray-500 */
+    cursor: pointer;
+    border: none;
+    background: none;
+    transition: all 150ms ease;
+}
+
+.fi-tabbed-bar-overflow-btn:hover {
+    background-color: rgb(243 244 246); /* gray-100 */
+    color: rgb(55 65 81); /* gray-700 */
+}
+
+:is(.dark) .fi-tabbed-bar-overflow-btn {
+    color: rgb(156 163 175); /* gray-400 */
+}
+
+:is(.dark) .fi-tabbed-bar-overflow-btn:hover {
+    background-color: rgb(55 65 81); /* gray-700 */
+    color: rgb(229 231 235); /* gray-200 */
+}
+
+.fi-tabbed-bar-overflow-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+/* Overflow dropdown menu */
+.fi-tabbed-overflow-menu {
+    position: fixed;
+    z-index: 100;
+    min-width: 14rem;
+    max-height: 20rem;
+    overflow-y: auto;
+    padding-block: 0.25rem;
+    border-radius: 0.5rem;
+    background-color: white;
+    border: 1px solid rgb(229 231 235); /* gray-200 */
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+:is(.dark) .fi-tabbed-overflow-menu {
+    background-color: rgb(31 41 55); /* gray-800 */
+    border-color: rgb(55 65 81); /* gray-700 */
+}
+
+.fi-tabbed-overflow-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding-inline: 0.75rem;
+    padding-block: 0.375rem;
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+    color: rgb(55 65 81); /* gray-700 */
+    cursor: pointer;
+    transition: background-color 150ms ease;
+    border: none;
+    background: none;
+    text-align: start;
+}
+
+.fi-tabbed-overflow-menu-item:hover {
+    background-color: rgb(243 244 246); /* gray-100 */
+}
+
+:is(.dark) .fi-tabbed-overflow-menu-item {
+    color: rgb(209 213 219); /* gray-300 */
+}
+
+:is(.dark) .fi-tabbed-overflow-menu-item:hover {
+    background-color: rgb(55 65 81); /* gray-700 */
+}
+
+.fi-tabbed-overflow-menu-item.fi-active {
+    color: var(--primary-600);
+    background-color: rgb(243 244 246); /* gray-100 */
+}
+
+:is(.dark) .fi-tabbed-overflow-menu-item.fi-active {
+    color: var(--primary-400);
+    background-color: rgb(55 65 81); /* gray-700 */
+}
+
+.fi-tabbed-overflow-menu-item-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* Container — min-width: 0 prevents flex/grid items from expanding beyond parent */
