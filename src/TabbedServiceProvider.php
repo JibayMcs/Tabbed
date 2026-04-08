@@ -5,14 +5,10 @@ namespace JibayMcs\Tabbed;
 use Filament\Support\Assets\AlpineComponent;
 use Filament\Support\Assets\Asset;
 use Filament\Support\Assets\Css;
-use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
 use Filament\Support\Facades\FilamentIcon;
-use Illuminate\Filesystem\Filesystem;
-use JibayMcs\Tabbed\Commands\TabbedCommand;
 use JibayMcs\Tabbed\Livewire\TabbedContainer;
 use Livewire\Livewire;
-use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -24,29 +20,12 @@ class TabbedServiceProvider extends PackageServiceProvider
 
     public function configurePackage(Package $package): void
     {
-        /*
-         * This class is a Package Service Provider
-         *
-         * More info: https://github.com/spatie/laravel-package-tools
-         */
-        $package->name(static::$name)
-            ->hasCommands($this->getCommands())
-            ->hasInstallCommand(function (InstallCommand $command) {
-                $command
-                    ->publishConfigFile()
-                    ->publishMigrations()
-                    ->askToRunMigrations()
-                    ->askToStarRepoOnGitHub('jibaymcs/tabbed');
-            });
+        $package->name(static::$name);
 
         $configFileName = $package->shortName();
 
         if (file_exists($package->basePath("/../config/{$configFileName}.php"))) {
             $package->hasConfigFile();
-        }
-
-        if (file_exists($package->basePath('/../database/migrations'))) {
-            $package->hasMigrations($this->getMigrations());
         }
 
         if (file_exists($package->basePath('/../resources/lang'))) {
@@ -58,7 +37,9 @@ class TabbedServiceProvider extends PackageServiceProvider
         }
     }
 
-    public function packageRegistered(): void {}
+    public function packageRegistered(): void
+    {
+    }
 
     public function packageBooted(): void
     {
@@ -78,15 +59,6 @@ class TabbedServiceProvider extends PackageServiceProvider
 
         // Icon Registration
         FilamentIcon::register($this->getIcons());
-
-        // Handle Stubs
-        if (app()->runningInConsole()) {
-            foreach (app(Filesystem::class)->files(__DIR__ . '/../stubs/') as $file) {
-                $this->publishes([
-                    $file->getRealPath() => base_path("stubs/tabbed/{$file->getFilename()}"),
-                ], 'tabbed-stubs');
-            }
-        }
     }
 
     protected function getAssetPackageName(): ?string
@@ -110,9 +82,7 @@ class TabbedServiceProvider extends PackageServiceProvider
      */
     protected function getCommands(): array
     {
-        return [
-            TabbedCommand::class,
-        ];
+        return [];
     }
 
     /**
@@ -144,8 +114,6 @@ class TabbedServiceProvider extends PackageServiceProvider
      */
     protected function getMigrations(): array
     {
-        return [
-            'create_tabbed_table',
-        ];
+        return [];
     }
 }

@@ -5,6 +5,7 @@ namespace JibayMcs\Tabbed\Actions;
 use Filament\Actions\Action;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Js;
+use JibayMcs\Tabbed\TabbedPlugin;
 
 class OpenInTabAction extends Action
 {
@@ -68,7 +69,7 @@ class OpenInTabAction extends Action
 
     public function getTabbedPage(): string
     {
-        return $this->tabbedPage ?? config('tabbed.default_page', 'edit');
+        return $this->tabbedPage ?? TabbedPlugin::get()->getDefaultPage();
     }
 
     public function resource(string $resource): static

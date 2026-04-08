@@ -1,8 +1,9 @@
 @php
+    $plugin = \JibayMcs\Tabbed\TabbedPlugin::get();
     $config = [
-        'maxTabs' => config('tabbed.max_tabs', 20),
-        'persistKey' => config('tabbed.persist_key', 'tabbed_tabs'),
-        'defaultPage' => config('tabbed.default_page', 'edit'),
+        'maxTabs' => $plugin->getMaxTabs(),
+        'persistKey' => $plugin->getPersistKey(),
+        'defaultPage' => $plugin->getDefaultPage(),
     ];
 @endphp
 
