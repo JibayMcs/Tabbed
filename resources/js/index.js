@@ -6,7 +6,10 @@ export default function tabbedManager(config = {}) {
         defaultPage: config.defaultPage ?? 'edit',
         middleClickToClose: config.middleClickToClose ?? false,
         showTabIcons: config.showTabIcons ?? true,
+        lazyLoad: config.lazyLoad ?? false,
+        destroyInactive: config.destroyInactive ?? false,
         tabIcons: {},
+        loadedTabIds: [],
 
         // Drag & drop state
         dragTabId: null,
@@ -111,6 +114,23 @@ export default function tabbedManager(config = {}) {
                 if (icons && this.showTabIcons) {
                     this.tabIcons = { ...this.tabIcons, ...icons }
                 }
+
+                // After sync, ensure active tab's component is loaded (lazy mode)
+                if (this.activeTabId) {
+                    this.ensureTabLoaded(this.activeTabId)
+                }
+            }
+        },
+
+        ensureTabLoaded(tabId) {
+            if (!this.lazyLoad && !this.destroyInactive) return
+
+            if (this.destroyInactive) {
+                this.loadedTabIds = [tabId]
+                this.$wire.loadTab(tabId)
+            } else if (!this.loadedTabIds.includes(tabId)) {
+                this.loadedTabIds.push(tabId)
+                this.$wire.loadTab(tabId)
             }
         },
 
@@ -252,6 +272,7 @@ export default function tabbedManager(config = {}) {
             }
 
             this.activeTabId = tabId
+            this.ensureTabLoaded(tabId)
             this.$dispatch('tabbed:tab-activated', { tabId })
         },
 

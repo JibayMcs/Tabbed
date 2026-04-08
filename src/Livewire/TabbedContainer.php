@@ -14,6 +14,8 @@ class TabbedContainer extends Component
 
     public array $tabs = [];
 
+    public array $loadedTabIds = [];
+
     public function syncTabs(array $tabs): array
     {
         $this->tabs = collect($tabs)
@@ -21,7 +23,25 @@ class TabbedContainer extends Component
             ->values()
             ->toArray();
 
+        // Without lazy loading, load all tabs immediately (default behavior)
+        if (! TabbedPlugin::get()->getLazyLoad()) {
+            $this->loadedTabIds = array_column($this->tabs, 'id');
+        } else {
+            // Clean up loaded IDs for tabs that no longer exist
+            $validIds = array_column($this->tabs, 'id');
+            $this->loadedTabIds = array_values(array_intersect($this->loadedTabIds, $validIds));
+        }
+
         return $this->resolveTabIcons();
+    }
+
+    public function loadTab(string $tabId): void
+    {
+        if (TabbedPlugin::get()->getDestroyInactive()) {
+            $this->loadedTabIds = [$tabId];
+        } elseif (! in_array($tabId, $this->loadedTabIds)) {
+            $this->loadedTabIds[] = $tabId;
+        }
     }
 
     protected function resolveTabIcons(): array

@@ -5,6 +5,8 @@
         'defaultPage' => $plugin->getDefaultPage(),
         'middleClickToClose' => $plugin->getMiddleClickToClose(),
         'showTabIcons' => $plugin->getShowTabIcons(),
+        'lazyLoad' => $plugin->getLazyLoad(),
+        'destroyInactive' => $plugin->getDestroyInactive(),
     ];
 @endphp
 
@@ -158,9 +160,10 @@
     @foreach($tabs as $tab)
         @php
             $pageClass = $this->resolvePageClass($tab['resource'] ?? '', $tab['page'] ?? '');
+            $isLoaded = in_array($tab['id'], $this->loadedTabIds);
         @endphp
 
-        @if($pageClass)
+        @if($pageClass && $isLoaded)
             <div
                 x-show="isActive('{{ $tab['id'] }}')"
                 wire:key="tab-panel-{{ $tab['id'] }}"

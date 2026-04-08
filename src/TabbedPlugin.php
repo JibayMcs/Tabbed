@@ -20,6 +20,10 @@ class TabbedPlugin implements Plugin
 
     protected bool $showTabIcons = true;
 
+    protected bool $lazyLoad = false;
+
+    protected bool $destroyInactive = false;
+
     public function getId(): string
     {
         return 'tabbed';
@@ -119,6 +123,30 @@ class TabbedPlugin implements Plugin
     public function getShowTabIcons(): bool
     {
         return $this->showTabIcons;
+    }
+
+    public function lazyLoad(bool $condition = true): static
+    {
+        $this->lazyLoad = $condition;
+
+        return $this;
+    }
+
+    public function getLazyLoad(): bool
+    {
+        return $this->lazyLoad || $this->destroyInactive;
+    }
+
+    public function destroyInactive(bool $condition = true): static
+    {
+        $this->destroyInactive = $condition;
+
+        return $this;
+    }
+
+    public function getDestroyInactive(): bool
+    {
+        return $this->destroyInactive;
     }
 
     public static function make(): static
