@@ -57,9 +57,7 @@
             "providers": [
                 "JibayMcs\\Tabbed\\TabbedServiceProvider"
             ],
-            "aliases": {
-                "Tabbed": "JibayMcs\\Tabbed\\Facades\\Tabbed"
-            }
+            "aliases": {}
         }
     },
     "config": {
