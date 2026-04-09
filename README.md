@@ -18,6 +18,9 @@ A FilamentPHP v5 plugin that brings IDE/browser-style tabs to your panel. Open r
 - Background tab opening
 - Custom tab labels
 - Custom tab colors (accent, background, text) with Filament Color support
+- Hover cards on tabs (rich tooltip with custom content on hover)
+- Lazy loading & destroy inactive (performance optimization)
+- Dropdown mode (compact button replacing the full tab bar)
 - Dark mode support
 - Translations: English & French
 
@@ -144,6 +147,39 @@ OpenInTabAction::make()
     ->tabTextColor('#991b1b')
 ```
 
+### Hover cards
+
+Display a rich tooltip when hovering over a tab. The content is fully customizable and has access to the `$record`:
+
+```php
+use JibayMcs\Tabbed\Enums\HoverCardPosition;
+use Illuminate\Support\HtmlString;
+
+// Blade view with record data
+OpenInTabAction::make()
+    ->hoverCardContent(fn ($record) => view('partials.tab-preview', ['record' => $record]))
+    ->hoverCardPosition(HoverCardPosition::Bottom)
+
+// Inline HTML
+OpenInTabAction::make()
+    ->hoverCardContent(fn ($record) => new HtmlString("<strong>{$record->name}</strong><br>{$record->email}"))
+    ->hoverCardDelay(400)           // Delay before showing (default: 600ms)
+    ->hoverCardLeaveDelay(300)      // Delay before hiding (default: 500ms)
+
+// Plain text
+OpenInTabAction::make()
+    ->hoverCardContent(fn ($record) => "#{$record->id} - {$record->name}")
+    ->hoverCardPosition(HoverCardPosition::Top)
+
+// Disable hover card
+OpenInTabAction::make()
+    ->hoverCard(false)
+```
+
+Available positions: `Top`, `TopStart`, `TopEnd`, `Bottom`, `BottomStart`, `BottomEnd`, `Left`, `Right`.
+
+The hover card stays visible when moving the cursor from the tab to the card. It also works on overflow dropdown items.
+
 ### JavaScript events
 
 You can open/close tabs programmatically from anywhere:
@@ -185,11 +221,61 @@ Configure via fluent methods in your `PanelProvider`:
 ```php
 TabbedPlugin::make()
     ->defaultPage('view')                                   // Default page on open (default: edit)
-    ->renderHook(PanelsRenderHook::TOPBAR_LOGO_AFTER)       // Tab bar position (default: PAGE_START)
+    ->renderHook(PanelsRenderHook::TOPBAR_LOGO_AFTER)       // Tab bar position (default: TOPBAR_LOGO_AFTER)
     ->persistKey('my_panel_tabs')                            // localStorage key (default: tabbed_tabs)
     ->middleClickToClose()                                  // Close tabs with middle mouse button (default: off)
     ->showTabIcons(false)                                   // Hide resource icons in tabs (default: true)
+    ->lazyLoad()                                            // Only load tab content on first activation (default: off)
+    ->destroyInactive()                                     // Destroy inactive tab components to save memory (default: off)
 ```
+
+### Performance: Lazy loading & destroy inactive
+
+By default, all open tabs have their Livewire components created immediately. For better performance with many tabs:
+
+```php
+// Lazy load: components are created only when a tab is activated for the first time.
+// Once loaded, they stay in memory (state preserved on switch).
+TabbedPlugin::make()->lazyLoad()
+
+// Destroy inactive: only the active tab has a Livewire component in the DOM.
+// Switching tabs destroys the previous component and creates the new one.
+// Saves memory but loses form state on switch. Implies lazyLoad.
+TabbedPlugin::make()->destroyInactive()
+
+// Keep alive: keep the N most recently visited tabs in memory (LRU).
+// Tabs beyond this limit are destroyed. Combines fast switching with memory savings.
+TabbedPlugin::make()->destroyInactive(keepAlive: 3)
+```
+
+A loading spinner appears in the tab panel while the Livewire component loads, and a small loading indicator is shown on the tab itself.
+
+### Dropdown mode
+
+Replace the full tab bar with a compact dropdown button:
+
+```php
+TabbedPlugin::make()
+    ->hasDropdown()                                         // Enables dropdown mode (default icon + badge)
+    ->hasDropdown(                                          // Full customization
+        icon: 'phosphor-tabs-duotone',                     // Custom icon (default: heroicon-m-squares-2x2)
+        label: 'Tabs',                                     // Optional text label
+        countBadge: true,                                   // Show tab count badge (default: true)
+        color: 'primary',                                   // Filament color name (default: primary)
+        outlined: false,                                    // Outlined style (default: false)
+    )
+
+// Icon only, no badge, outlined
+TabbedPlugin::make()->hasDropdown(countBadge: false, outlined: true)
+
+// Label only, no icon
+TabbedPlugin::make()->hasDropdown(icon: null, label: 'My tabs')
+
+// Icon + label
+TabbedPlugin::make()->hasDropdown(icon: 'heroicon-m-squares-2x2', label: 'Tabs')
+```
+
+Clicking the button opens a dropdown listing all tabs with icons, active indicator, close buttons, and hover cards. All existing features (lazy load, middle-click, persistence) work in dropdown mode.
 
 ### Config file
 
@@ -219,7 +305,7 @@ use Filament\View\PanelsRenderHook;
 // In the topbar (after the logo)
 TabbedPlugin::make()->renderHook(PanelsRenderHook::TOPBAR_LOGO_AFTER)
 
-// At the start of the page content (default)
+// At the start of the page content
 TabbedPlugin::make()->renderHook(PanelsRenderHook::PAGE_START)
 
 // Inside the main content area

@@ -662,3 +662,35 @@
 .fi-tabbed-panel {
     width: 100%;
 }
+
+/* Panel loading indicator */
+.fi-tabbed-panel-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 4rem 0;
+}
+
+.fi-tabbed-panel-loading-spinner {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: var(--primary-500);
+}
+
+/* Tab loading badge */
+.fi-tabbed-bar-tab-loading {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.fi-tabbed-bar-tab-loading-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    color: var(--primary-500);
+}
+
+:is(.dark) .fi-tabbed-bar-tab-loading-icon {
+    color: var(--primary-400);
+}

@@ -7,6 +7,7 @@
         'showTabIcons' => $plugin->getShowTabIcons(),
         'lazyLoad' => $plugin->getLazyLoad(),
         'destroyInactive' => $plugin->getDestroyInactive(),
+        'keepAlive' => $plugin->getKeepAlive(),
         'dropdown' => $plugin->getDropdown(),
     ];
 @endphp
@@ -105,6 +106,13 @@
                                 />
                             </template>
 
+                            {{-- Loading badge --}}
+                            <template x-if="isTabLoading(tab.id)">
+                                <span class="fi-tabbed-bar-tab-loading">
+                                    <x-filament::loading-indicator class="fi-tabbed-bar-tab-loading-icon" />
+                                </span>
+                            </template>
+
                             <button
                                 type="button"
                                 class="fi-tabbed-bar-tab-close"
@@ -161,6 +169,9 @@
                 >
                     <span x-show="showTabIcons && tabIcons[tab.resource]" x-html="tabIcons[tab.resource]"></span>
                     <span class="fi-tabbed-overflow-menu-item-label" x-text="getTabLabel(tab)"></span>
+                    <template x-if="isTabLoading(tab.id)">
+                        <x-filament::loading-indicator class="fi-tabbed-bar-tab-loading-icon" />
+                    </template>
                     <button
                         type="button"
                         class="fi-tabbed-overflow-menu-item-close"
@@ -219,6 +230,16 @@
             <span>{{ __('tabbed::tabbed.close_all') }}</span>
         </button>
     </div>
+
+    {{-- Loading indicator (shown while a tab's Livewire component is loading) --}}
+    <template x-for="tab in tabs" :key="'loading-' + tab.id">
+        <div
+            x-show="isActive(tab.id) && isTabLoading(tab.id)"
+            class="fi-tabbed-panel-loading"
+        >
+            <x-filament::loading-indicator class="fi-tabbed-panel-loading-spinner" />
+        </div>
+    </template>
 
     {{-- Tab content panels --}}
     @foreach($tabs as $tab)

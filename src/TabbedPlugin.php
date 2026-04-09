@@ -24,6 +24,8 @@ class TabbedPlugin implements Plugin
 
     protected bool $destroyInactive = false;
 
+    protected int $keepAlive = 1;
+
     protected bool $dropdown = false;
 
     protected ?string $dropdownIcon = 'heroicon-m-squares-2x2';
@@ -149,9 +151,10 @@ class TabbedPlugin implements Plugin
         return $this->lazyLoad || $this->destroyInactive;
     }
 
-    public function destroyInactive(bool $condition = true): static
+    public function destroyInactive(bool $condition = true, int $keepAlive = 1): static
     {
         $this->destroyInactive = $condition;
+        $this->keepAlive = max(1, $keepAlive);
 
         return $this;
     }
@@ -159,6 +162,11 @@ class TabbedPlugin implements Plugin
     public function getDestroyInactive(): bool
     {
         return $this->destroyInactive;
+    }
+
+    public function getKeepAlive(): int
+    {
+        return $this->keepAlive;
     }
 
     public function hasDropdown(

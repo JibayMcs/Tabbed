@@ -54,6 +54,11 @@ class TabbedContainer extends Component
         }
     }
 
+    public function loadTabs(array $tabIds): void
+    {
+        $this->loadedTabIds = array_values($tabIds);
+    }
+
     protected function resolveTabIcons(): array
     {
         if (! TabbedPlugin::get()->getShowTabIcons()) {

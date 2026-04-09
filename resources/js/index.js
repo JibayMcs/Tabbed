@@ -8,6 +8,7 @@ export default function tabbedManager(config = {}) {
         showTabIcons: config.showTabIcons ?? true,
         lazyLoad: config.lazyLoad ?? false,
         destroyInactive: config.destroyInactive ?? false,
+        keepAlive: config.keepAlive ?? 1,
         dropdownMode: config.dropdown ?? false,
         tabIcons: {},
         loadedTabIds: [],
@@ -32,6 +33,9 @@ export default function tabbedManager(config = {}) {
         overflowMenuY: 0,
         hasOverflow: false,
         overflowTabs: [],
+
+        // Loading state
+        loadingTabIds: [],
 
         // Hover card state
         hoverCardTabId: null,
@@ -145,12 +149,37 @@ export default function tabbedManager(config = {}) {
             if (!this.lazyLoad && !this.destroyInactive) return
 
             if (this.destroyInactive) {
-                this.loadedTabIds = [tabId]
-                this.$wire.loadTab(tabId)
-            } else if (!this.loadedTabIds.includes(tabId)) {
+                // LRU: move tabId to the end (most recent), trim to keepAlive
+                const lru = this.loadedTabIds.filter(id => id !== tabId)
+                lru.push(tabId)
+
+                // Already loaded and within keepAlive — no server call needed
+                if (this.loadedTabIds.includes(tabId) && lru.length <= this.keepAlive) return
+
+                // Evict oldest entries beyond keepAlive
+                const kept = lru.slice(-this.keepAlive)
+
+                this.loadingTabIds = [...this.loadingTabIds.filter(id => id !== tabId), tabId]
+                this.loadedTabIds = kept
+
+                this.$wire.loadTabs(kept).then(() => {
+                    this.loadingTabIds = this.loadingTabIds.filter(id => id !== tabId)
+                })
+            } else {
+                // Lazy load: load once, keep forever
+                if (this.loadedTabIds.includes(tabId)) return
+
+                this.loadingTabIds = [...this.loadingTabIds.filter(id => id !== tabId), tabId]
                 this.loadedTabIds.push(tabId)
-                this.$wire.loadTab(tabId)
+
+                this.$wire.loadTab(tabId).then(() => {
+                    this.loadingTabIds = this.loadingTabIds.filter(id => id !== tabId)
+                })
             }
+        },
+
+        isTabLoading(tabId) {
+            return this.loadingTabIds.includes(tabId)
         },
 
         togglePageContent() {
