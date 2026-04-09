@@ -87,6 +87,12 @@ export default function tabbedManager(config = {}) {
                 }
             })
 
+            // Re-apply page content visibility after Livewire morphs
+            // (e.g. table refresh re-creates elements without display:none)
+            Livewire.hook('morph.updated', () => {
+                this.togglePageContent()
+            })
+
         },
 
         loadFromStorage() {
@@ -144,12 +150,45 @@ export default function tabbedManager(config = {}) {
 
         togglePageContent() {
             const shouldHide = this.hasTabs && this.activeTabId !== null
+            let portalInSibling = false
 
-            // Hide all sibling elements after the container
             let sibling = this.$root.nextElementSibling
             while (sibling) {
-                sibling.style.display = shouldHide ? 'none' : ''
+                if (sibling.querySelector('#fi-tabbed-bar-portal')) {
+                    portalInSibling = true
+                    if (shouldHide) {
+                        // Hide children individually, keep the portal visible
+                        Array.from(sibling.children).forEach(child => {
+                            child.style.display = child.id === 'fi-tabbed-bar-portal' ? '' : 'none'
+                        })
+                        sibling.style.display = ''
+                    } else {
+                        Array.from(sibling.children).forEach(child => {
+                            child.style.display = ''
+                        })
+                        sibling.style.display = ''
+                    }
+                } else {
+                    sibling.style.display = shouldHide ? 'none' : ''
+                }
                 sibling = sibling.nextElementSibling
+            }
+
+            // When the portal is in a later sibling (PAGE_START), the tab panels
+            // render above the tab bar in DOM order. Use flex + order to flip them.
+            if (portalInSibling) {
+                const parent = this.$root.parentElement
+                if (parent) {
+                    if (shouldHide) {
+                        parent.style.display = 'flex'
+                        parent.style.flexDirection = 'column'
+                        this.$root.style.order = '2'
+                    } else {
+                        parent.style.display = ''
+                        parent.style.flexDirection = ''
+                        this.$root.style.order = ''
+                    }
+                }
             }
         },
 

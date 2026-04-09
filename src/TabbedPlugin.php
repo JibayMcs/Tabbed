@@ -41,7 +41,7 @@ class TabbedPlugin implements Plugin
 
                 TabbedContainer::$barRendered = true;
 
-                return new HtmlString('<div id="fi-tabbed-bar-portal"></div>');
+                return new HtmlString('<div id="fi-tabbed-bar-portal" wire:ignore></div>');
             },
         );
 
