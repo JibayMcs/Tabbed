@@ -12,6 +12,8 @@ return [
     'unsaved_changes_description' => 'Cet onglet contient des modifications non sauvegardées. Êtes-vous sûr de vouloir le fermer ?',
     'pin' => 'Épingler',
     'unpin' => 'Désépingler',
+    'search_tabs' => 'Rechercher un onglet...',
+    'no_results' => 'Aucun résultat',
     'cancel' => 'Annuler',
     'close_anyway' => 'Fermer quand même',
 ];

@@ -34,6 +34,10 @@ export default function tabbedManager(config = {}) {
         hasOverflow: false,
         overflowTabs: [],
 
+        // Search state
+        searchQuery: '',
+        searchHighlightIndex: -1,
+
         // Loading state
         loadingTabIds: [],
 
@@ -767,48 +771,25 @@ export default function tabbedManager(config = {}) {
             if (!container) return
 
             const tabEls = container.querySelectorAll('.fi-tabbed-bar-tab')
-            const overflowEl = container.parentElement?.querySelector('.fi-tabbed-bar-overflow')
 
-            // Show all tabs to measure accurately
+            // Show all tabs to measure
             tabEls.forEach(el => el.classList.remove('fi-tabbed-overflow-hidden'))
 
-            // The button always takes layout space (visibility:hidden).
-            // containerRight is already reduced by the button's width.
-            // Calculate fullRight = the true available width without the button.
-            const containerRight = container.getBoundingClientRect().right
-            const buttonWidth = overflowEl ? overflowEl.getBoundingClientRect().width : 0
-            const fullRight = containerRight + buttonWidth
-
-            // Do tabs overflow the FULL available width (without button)?
-            let anyOverflow = false
-            for (let i = 0; i < tabEls.length; i++) {
-                if (tabEls[i].getBoundingClientRect().right > fullRight) {
-                    anyOverflow = true
-                    break
-                }
-            }
-
-            if (!anyOverflow) {
+            // No overflow — all tabs fit within the container
+            if (container.scrollWidth <= container.clientWidth) {
                 this.hasOverflow = false
                 this.overflowTabs = []
                 return
             }
 
-            // True overflow — find cut point WITH button space (containerRight)
+            // Overflow detected — hide tabs from the end until content fits
             this.hasOverflow = true
+            let cutIndex = tabEls.length
 
-            let cutIndex = -1
-            for (let i = 0; i < tabEls.length; i++) {
-                if (tabEls[i].getBoundingClientRect().right > containerRight) {
-                    cutIndex = i
-                    break
-                }
-            }
-
-            if (cutIndex === -1) cutIndex = tabEls.length - 1
-
-            for (let i = cutIndex; i < tabEls.length; i++) {
+            for (let i = tabEls.length - 1; i >= 0; i--) {
                 tabEls[i].classList.add('fi-tabbed-overflow-hidden')
+                cutIndex = i
+                if (container.scrollWidth <= container.clientWidth) break
             }
 
             this.overflowTabs = this.tabs.slice(cutIndex)
@@ -829,6 +810,8 @@ export default function tabbedManager(config = {}) {
 
             this.overflowMenuY = rect.bottom + 4
             this.showOverflowMenu = true
+            this.searchQuery = ''
+            this.searchHighlightIndex = -1
 
             // Position so right edge of menu aligns with right edge of button
             this.$nextTick(() => {
@@ -850,11 +833,63 @@ export default function tabbedManager(config = {}) {
                 if (menuRect.bottom > viewportH) {
                     this.overflowMenuY = rect.top - menuRect.height - 4
                 }
+
+                // Auto-focus search input if enough tabs
+                const input = menu.querySelector('.fi-tabbed-search-input')
+                if (input) input.focus()
             })
         },
 
         closeOverflowMenu() {
             this.showOverflowMenu = false
+            this.searchQuery = ''
+            this.searchHighlightIndex = -1
+        },
+
+        // --- Search ---
+
+        get filteredOverflowTabs() {
+            if (!this.searchQuery.trim()) return this.overflowTabs
+
+            const q = this.searchQuery.trim().toLowerCase()
+            return this.overflowTabs.filter(tab => {
+                const label = this.getTabLabel(tab).toLowerCase()
+                return label.includes(q)
+            })
+        },
+
+        get showSearch() {
+            return this.overflowTabs.length >= 5
+        },
+
+        onSearchKeydown(e) {
+            const filtered = this.filteredOverflowTabs
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault()
+                this.searchHighlightIndex = Math.min(this.searchHighlightIndex + 1, filtered.length - 1)
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault()
+                this.searchHighlightIndex = Math.max(this.searchHighlightIndex - 1, -1)
+            } else if (e.key === 'Enter' && this.searchHighlightIndex >= 0 && this.searchHighlightIndex < filtered.length) {
+                e.preventDefault()
+                const tab = filtered[this.searchHighlightIndex]
+                this.setActiveTab(tab.id)
+                this.closeOverflowMenu()
+            } else if (e.key === 'Escape') {
+                e.preventDefault()
+                e.stopPropagation()
+                if (this.searchQuery) {
+                    this.searchQuery = ''
+                    this.searchHighlightIndex = -1
+                } else {
+                    this.closeOverflowMenu()
+                }
+            }
+        },
+
+        onSearchInput() {
+            this.searchHighlightIndex = -1
         },
 
         // --- Hover Card ---

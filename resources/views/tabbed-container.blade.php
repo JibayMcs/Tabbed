@@ -173,10 +173,28 @@
             :style="`left: ${overflowMenuX}px; top: ${overflowMenuY}px`"
             @click.stop
         >
-            <template x-for="tab in overflowTabs" :key="'overflow-' + tab.id">
+            {{-- Search input --}}
+            <div x-show="showSearch" class="fi-tabbed-search">
+                <x-filament::icon icon="heroicon-m-magnifying-glass" class="fi-tabbed-search-icon" />
+                <input
+                    type="text"
+                    class="fi-tabbed-search-input"
+                    x-model="searchQuery"
+                    @input="onSearchInput()"
+                    @keydown="onSearchKeydown($event)"
+                    placeholder="{{ __('tabbed::tabbed.search_tabs') }}"
+                />
+            </div>
+
+            {{-- No results --}}
+            <div x-show="showSearch && searchQuery && filteredOverflowTabs.length === 0" class="fi-tabbed-search-empty">
+                {{ __('tabbed::tabbed.no_results') }}
+            </div>
+
+            <template x-for="(tab, index) in filteredOverflowTabs" :key="'overflow-' + tab.id">
                 <div
                     class="fi-tabbed-overflow-menu-item"
-                    :class="{ 'fi-active': isActive(tab.id) }"
+                    :class="{ 'fi-active': isActive(tab.id), 'fi-highlighted': index === searchHighlightIndex }"
                     @click="setActiveTab(tab.id); closeOverflowMenu()"
                     @auxclick="onMiddleClick($event, tab.id)"
                     @mouseenter="hoverCardEnter(tab.id, $el)"

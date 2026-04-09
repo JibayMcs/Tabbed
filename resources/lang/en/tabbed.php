@@ -12,6 +12,8 @@ return [
     'unsaved_changes_description' => 'This tab contains unsaved changes. Are you sure you want to close it?',
     'pin' => 'Pin',
     'unpin' => 'Unpin',
+    'search_tabs' => 'Search tabs...',
+    'no_results' => 'No results',
     'cancel' => 'Cancel',
     'close_anyway' => 'Close anyway',
 ];

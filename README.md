@@ -24,6 +24,7 @@ A FilamentPHP v5 plugin that brings IDE/browser-style tabs to your panel. Open r
 - Dirty state detection with unsaved changes confirmation modal
 - Post-save redirect interception (stay in tab after save, create-to-edit transformation)
 - Pinned tabs (anchored left, protected from bulk close, visually distinct)
+- Tab search in overflow/dropdown menu (filter by name, keyboard navigation)
 - Dark mode support
 - Translations: English, French & Spanish
 
@@ -330,6 +331,10 @@ Right-click a tab and select "Pin" to pin it. Pinned tabs are visually distinct 
 - Drag & drop is constrained: pinned tabs can only be reordered among themselves
 
 The close button (x) still works on pinned tabs — pinning protects against bulk close, not individual close. Pin state is persisted in localStorage.
+
+### Tab search
+
+When the overflow dropdown (or dropdown mode menu) contains 5 or more tabs, a search field appears at the top. Type to filter tabs by name in real time (case-insensitive, partial match). Use arrow keys to navigate results and Enter to activate the highlighted tab. Escape clears the search, or closes the menu if the search is already empty.
 
 ### Config file
 

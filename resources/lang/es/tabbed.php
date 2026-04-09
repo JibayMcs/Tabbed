@@ -12,6 +12,8 @@ return [
     'unsaved_changes_description' => 'Esta pestaña contiene cambios sin guardar. ¿Estás seguro de que quieres cerrarla?',
     'pin' => 'Fijar',
     'unpin' => 'Desfijar',
+    'search_tabs' => 'Buscar pestañas...',
+    'no_results' => 'Sin resultados',
     'cancel' => 'Cancelar',
     'close_anyway' => 'Cerrar de todos modos',
 ];
