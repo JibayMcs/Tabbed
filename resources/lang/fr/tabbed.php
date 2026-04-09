@@ -8,4 +8,8 @@ return [
     'close_others' => 'Fermer les autres',
     'close_all' => 'Tout fermer',
     'all_tabs' => 'Tous les onglets',
+    'unsaved_changes' => 'Modifications non sauvegardées',
+    'unsaved_changes_description' => 'Cet onglet contient des modifications non sauvegardées. Êtes-vous sûr de vouloir le fermer ?',
+    'cancel' => 'Annuler',
+    'close_anyway' => 'Fermer quand même',
 ];

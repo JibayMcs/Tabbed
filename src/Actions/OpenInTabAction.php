@@ -28,6 +28,8 @@ class OpenInTabAction extends Action
 
     protected ?string $tabTextColor = null;
 
+    protected bool $confirmOnClose = false;
+
     public static function getDefaultName(): ?string
     {
         return 'tabbed';
@@ -84,6 +86,10 @@ class OpenInTabAction extends Action
             $data['tabTextColor'] = $this->tabTextColor;
         }
 
+        if ($this->confirmOnClose) {
+            $data['confirmOnClose'] = true;
+        }
+
         if ($this->hasHoverCard && $this->hoverCardContentCallback) {
             $content = ($this->hoverCardContentCallback)($record);
 
@@ -135,6 +141,13 @@ class OpenInTabAction extends Action
     public function activate(bool $condition = true): static
     {
         $this->shouldActivate = $condition;
+
+        return $this;
+    }
+
+    public function confirmOnClose(bool $condition = true): static
+    {
+        $this->confirmOnClose = $condition;
 
         return $this;
     }

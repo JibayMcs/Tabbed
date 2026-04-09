@@ -9,6 +9,7 @@
         'destroyInactive' => $plugin->getDestroyInactive(),
         'keepAlive' => $plugin->getKeepAlive(),
         'dropdown' => $plugin->getDropdown(),
+        'confirmClose' => $plugin->getConfirmClose(),
     ];
 @endphp
 
@@ -113,6 +114,11 @@
                                 </span>
                             </template>
 
+                            {{-- Dirty indicator --}}
+                            <template x-if="isTabDirty(tab.id)">
+                                <span class="fi-tabbed-bar-tab-dirty"></span>
+                            </template>
+
                             <button
                                 type="button"
                                 class="fi-tabbed-bar-tab-close"
@@ -172,6 +178,9 @@
                     <template x-if="isTabLoading(tab.id)">
                         <x-filament::loading-indicator class="fi-tabbed-bar-tab-loading-icon" />
                     </template>
+                    <template x-if="isTabDirty(tab.id)">
+                        <span class="fi-tabbed-bar-tab-dirty"></span>
+                    </template>
                     <button
                         type="button"
                         class="fi-tabbed-overflow-menu-item-close"
@@ -230,6 +239,41 @@
             <span>{{ __('tabbed::tabbed.close_all') }}</span>
         </button>
     </div>
+
+    {{-- Dirty close confirmation modal --}}
+    <template x-teleport="body">
+        <div
+            x-show="dirtyModalVisible"
+            x-cloak
+            class="fi-tabbed-dirty-modal-backdrop"
+            @click.self="cancelDirtyClose()"
+        >
+            <div
+                class="fi-tabbed-dirty-modal"
+                x-show="dirtyModalVisible"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-95"
+            >
+                <div class="fi-tabbed-dirty-modal-icon">
+                    <x-filament::icon icon="heroicon-o-exclamation-triangle" class="fi-tabbed-dirty-modal-icon-svg" />
+                </div>
+                <h3 class="fi-tabbed-dirty-modal-title">{{ __('tabbed::tabbed.unsaved_changes') }}</h3>
+                <p class="fi-tabbed-dirty-modal-description">{{ __('tabbed::tabbed.unsaved_changes_description') }}</p>
+                <div class="fi-tabbed-dirty-modal-actions">
+                    <button type="button" class="fi-tabbed-dirty-modal-btn fi-tabbed-dirty-modal-btn-cancel" @click="cancelDirtyClose()">
+                        {{ __('tabbed::tabbed.cancel') }}
+                    </button>
+                    <button type="button" class="fi-tabbed-dirty-modal-btn fi-tabbed-dirty-modal-btn-confirm" @click="confirmDirtyClose()">
+                        {{ __('tabbed::tabbed.close_anyway') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
 
     {{-- Loading indicator (shown while a tab's Livewire component is loading) --}}
     <template x-for="tab in tabs" :key="'loading-' + tab.id">

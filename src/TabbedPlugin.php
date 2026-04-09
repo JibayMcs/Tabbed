@@ -26,6 +26,8 @@ class TabbedPlugin implements Plugin
 
     protected int $keepAlive = 1;
 
+    protected bool $confirmClose = false;
+
     protected bool $dropdown = false;
 
     protected ?string $dropdownIcon = 'heroicon-m-squares-2x2';
@@ -167,6 +169,18 @@ class TabbedPlugin implements Plugin
     public function getKeepAlive(): int
     {
         return $this->keepAlive;
+    }
+
+    public function confirmClose(bool $condition = true): static
+    {
+        $this->confirmClose = $condition;
+
+        return $this;
+    }
+
+    public function getConfirmClose(): bool
+    {
+        return $this->confirmClose;
     }
 
     public function hasDropdown(

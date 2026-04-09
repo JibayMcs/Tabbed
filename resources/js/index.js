@@ -37,6 +37,15 @@ export default function tabbedManager(config = {}) {
         // Loading state
         loadingTabIds: [],
 
+        // Dirty state
+        dirtyTabIds: [],
+        confirmClose: config.confirmClose ?? false,
+
+        // Dirty modal state
+        dirtyModalVisible: false,
+        dirtyModalTabId: null,
+        dirtyModalMode: 'single',
+
         // Hover card state
         hoverCardTabId: null,
         hoverCardVisible: false,
@@ -96,11 +105,40 @@ export default function tabbedManager(config = {}) {
                 }
             })
 
+            // Detect save/create calls to clear dirty state
+            Livewire.hook('commit', ({ component, commit, succeed }) => {
+                succeed(() => {
+                    const hasSaveCall = commit.calls?.some(call =>
+                        ['save', 'create'].includes(call.method)
+                    )
+                    if (!hasSaveCall) return
+
+                    const el = document.querySelector(`[wire\\:id="${component.id}"]`)
+                    const panel = el?.closest('.fi-tabbed-panel')
+                    if (!panel) return
+
+                    const tabId = panel.getAttribute('wire:key')?.replace('tab-panel-', '')
+                    if (tabId) {
+                        this.clearTabDirty(tabId)
+                    }
+                })
+            })
+
             // Re-apply page content visibility after Livewire morphs
             // (e.g. table refresh re-creates elements without display:none)
             Livewire.hook('morph.updated', () => {
                 this.togglePageContent()
             })
+
+            // Watch for new panels (lazy load, destroyInactive) to attach dirty listeners
+            let dirtyRafId = null
+            new MutationObserver(() => {
+                if (dirtyRafId) cancelAnimationFrame(dirtyRafId)
+                dirtyRafId = requestAnimationFrame(() => {
+                    dirtyRafId = null
+                    this.setupDirtyListeners()
+                })
+            }).observe(this.$root, { childList: true, subtree: true })
 
         },
 
@@ -142,6 +180,9 @@ export default function tabbedManager(config = {}) {
                 if (this.activeTabId) {
                     this.ensureTabLoaded(this.activeTabId)
                 }
+
+                // Attach dirty detection listeners on new panels
+                this.$nextTick(() => this.setupDirtyListeners())
             }
         },
 
@@ -162,7 +203,7 @@ export default function tabbedManager(config = {}) {
                 this.loadingTabIds = [...this.loadingTabIds.filter(id => id !== tabId), tabId]
                 this.loadedTabIds = kept
 
-                this.$wire.loadTabs(kept).then(() => {
+                Promise.resolve(this.$wire.loadTabs(kept)).then(() => {
                     this.loadingTabIds = this.loadingTabIds.filter(id => id !== tabId)
                 })
             } else {
@@ -172,7 +213,7 @@ export default function tabbedManager(config = {}) {
                 this.loadingTabIds = [...this.loadingTabIds.filter(id => id !== tabId), tabId]
                 this.loadedTabIds.push(tabId)
 
-                this.$wire.loadTab(tabId).then(() => {
+                Promise.resolve(this.$wire.loadTab(tabId)).then(() => {
                     this.loadingTabIds = this.loadingTabIds.filter(id => id !== tabId)
                 })
             }
@@ -180,6 +221,44 @@ export default function tabbedManager(config = {}) {
 
         isTabLoading(tabId) {
             return this.loadingTabIds.includes(tabId)
+        },
+
+        // --- Dirty State ---
+
+        isTabDirty(tabId) {
+            return this.dirtyTabIds.includes(tabId)
+        },
+
+        markTabDirty(tabId) {
+            if (!this.dirtyTabIds.includes(tabId)) {
+                this.dirtyTabIds.push(tabId)
+            }
+        },
+
+        clearTabDirty(tabId) {
+            this.dirtyTabIds = this.dirtyTabIds.filter(id => id !== tabId)
+        },
+
+        setupDirtyListeners() {
+            const panels = document.querySelectorAll('.fi-tabbed-panel')
+            panels.forEach(panel => {
+                if (panel._dirtyListenerAttached) return
+                panel._dirtyListenerAttached = true
+
+                const tabId = panel.getAttribute('wire:key')?.replace('tab-panel-', '')
+                if (!tabId) return
+
+                // Delay to avoid catching initial Livewire hydration events
+                setTimeout(() => {
+                    const handler = (e) => {
+                        if (!e.isTrusted) return
+                        this.markTabDirty(tabId)
+                    }
+
+                    panel.addEventListener('input', handler, true)
+                    panel.addEventListener('change', handler, true)
+                }, 500)
+            })
         },
 
         togglePageContent() {
@@ -247,7 +326,7 @@ export default function tabbedManager(config = {}) {
             }
         },
 
-        addTab({ resource, page, recordId = null, label = null, background = false, tabColor = null, tabBackground = null, tabTextColor = null, hoverCard = null }) {
+        addTab({ resource, page, recordId = null, label = null, background = false, tabColor = null, tabBackground = null, tabTextColor = null, hoverCard = null, confirmOnClose = false }) {
             const existing = this.tabs.find(t =>
                 t.resource === resource &&
                 t.page === page &&
@@ -273,6 +352,7 @@ export default function tabbedManager(config = {}) {
                 tabBackground: tabBackground ?? null,
                 tabTextColor: tabTextColor ?? null,
                 hoverCard: hoverCard ?? null,
+                confirmOnClose: confirmOnClose,
             }
 
             tab.label = this.generateLabel(tab)
@@ -294,6 +374,21 @@ export default function tabbedManager(config = {}) {
         },
 
         removeTab(tabId) {
+            const tab = this.tabs.find(t => t.id === tabId)
+            if (!tab) return
+
+            const needsConfirm = this.isTabDirty(tabId) && (this.confirmClose || tab.confirmOnClose)
+            if (needsConfirm) {
+                this.dirtyModalTabId = tabId
+                this.dirtyModalMode = 'single'
+                this.dirtyModalVisible = true
+                return
+            }
+
+            this._doRemoveTab(tabId)
+        },
+
+        _doRemoveTab(tabId) {
             const index = this.tabs.findIndex(t => t.id === tabId)
             if (index === -1) return
 
@@ -304,6 +399,7 @@ export default function tabbedManager(config = {}) {
             const removedTab = this.tabs[index]
 
             this.tabs.splice(index, 1)
+            this.clearTabDirty(tabId)
             this.reindex()
 
             if (wasActive) {
@@ -324,7 +420,23 @@ export default function tabbedManager(config = {}) {
         },
 
         closeOtherTabs(tabId) {
+            const dirtyOthers = this.tabs.filter(t =>
+                t.id !== tabId && this.isTabDirty(t.id) && (this.confirmClose || t.confirmOnClose)
+            )
+
+            if (dirtyOthers.length > 0) {
+                this.dirtyModalTabId = tabId
+                this.dirtyModalMode = 'close-others'
+                this.dirtyModalVisible = true
+                return
+            }
+
+            this._doCloseOtherTabs(tabId)
+        },
+
+        _doCloseOtherTabs(tabId) {
             this.tabs = this.tabs.filter(t => t.id === tabId)
+            this.dirtyTabIds = this.dirtyTabIds.filter(id => id === tabId)
             this.activeTabId = tabId
             this.reindex()
             this.saveToStorage()
@@ -333,8 +445,23 @@ export default function tabbedManager(config = {}) {
         },
 
         closeAllTabs() {
+            const dirtyTabs = this.tabs.filter(t =>
+                this.isTabDirty(t.id) && (this.confirmClose || t.confirmOnClose)
+            )
+
+            if (dirtyTabs.length > 0) {
+                this.dirtyModalMode = 'close-all'
+                this.dirtyModalVisible = true
+                return
+            }
+
+            this._doCloseAllTabs()
+        },
+
+        _doCloseAllTabs() {
             const hadTabs = this.tabs.length > 0
             this.tabs = []
+            this.dirtyTabIds = []
             this.activeTabId = null
             this.saveToStorage()
             this.wireSyncTabs()
@@ -344,6 +471,31 @@ export default function tabbedManager(config = {}) {
             if (hadTabs) {
                 this.$dispatch('tabbed:all-closed')
             }
+        },
+
+        confirmDirtyClose() {
+            switch (this.dirtyModalMode) {
+                case 'single':
+                    if (this.dirtyModalTabId) {
+                        this._doRemoveTab(this.dirtyModalTabId)
+                    }
+                    break
+                case 'close-others':
+                    if (this.dirtyModalTabId) {
+                        this._doCloseOtherTabs(this.dirtyModalTabId)
+                    }
+                    break
+                case 'close-all':
+                    this._doCloseAllTabs()
+                    break
+            }
+            this.dirtyModalVisible = false
+            this.dirtyModalTabId = null
+        },
+
+        cancelDirtyClose() {
+            this.dirtyModalVisible = false
+            this.dirtyModalTabId = null
         },
 
         setActiveTab(tabId) {
