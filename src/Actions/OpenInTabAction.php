@@ -30,6 +30,8 @@ class OpenInTabAction extends Action
 
     protected bool $confirmOnClose = false;
 
+    protected bool $closeOnSave = false;
+
     public static function getDefaultName(): ?string
     {
         return 'tabbed';
@@ -90,6 +92,10 @@ class OpenInTabAction extends Action
             $data['confirmOnClose'] = true;
         }
 
+        if ($this->closeOnSave) {
+            $data['closeOnSave'] = true;
+        }
+
         if ($this->hasHoverCard && $this->hoverCardContentCallback) {
             $content = ($this->hoverCardContentCallback)($record);
 
@@ -148,6 +154,13 @@ class OpenInTabAction extends Action
     public function confirmOnClose(bool $condition = true): static
     {
         $this->confirmOnClose = $condition;
+
+        return $this;
+    }
+
+    public function closeOnSave(bool $condition = true): static
+    {
+        $this->closeOnSave = $condition;
 
         return $this;
     }

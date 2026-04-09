@@ -28,6 +28,8 @@ class TabbedPlugin implements Plugin
 
     protected bool $confirmClose = false;
 
+    protected bool $interceptRedirects = true;
+
     protected bool $dropdown = false;
 
     protected ?string $dropdownIcon = 'heroicon-m-squares-2x2';
@@ -181,6 +183,18 @@ class TabbedPlugin implements Plugin
     public function getConfirmClose(): bool
     {
         return $this->confirmClose;
+    }
+
+    public function interceptRedirects(bool $condition = true): static
+    {
+        $this->interceptRedirects = $condition;
+
+        return $this;
+    }
+
+    public function getInterceptRedirects(): bool
+    {
+        return $this->interceptRedirects;
     }
 
     public function hasDropdown(

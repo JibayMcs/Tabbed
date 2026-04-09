@@ -37,6 +37,9 @@ export default function tabbedManager(config = {}) {
         // Loading state
         loadingTabIds: [],
 
+        // Redirect interception
+        interceptRedirects: config.interceptRedirects ?? true,
+
         // Dirty state
         dirtyTabIds: [],
         confirmClose: config.confirmClose ?? false,
@@ -140,6 +143,45 @@ export default function tabbedManager(config = {}) {
                 })
             }).observe(this.$root, { childList: true, subtree: true })
 
+            // Intercept post-save redirects to keep user inside tabs
+            Livewire.interceptMessage(({ message, onSuccess }) => {
+                onSuccess(({ payload }) => {
+                    if (!this.interceptRedirects) return
+                    if (!payload.effects?.redirect) return
+
+                    const hasSaveCall = message.calls?.some(call =>
+                        ['save', 'create'].includes(call.method)
+                    )
+                    if (!hasSaveCall) return
+
+                    const el = message.component.el
+                    const panel = el?.closest('.fi-tabbed-panel')
+                    if (!panel) return
+
+                    const tabId = panel.getAttribute('wire:key')?.replace('tab-panel-', '')
+                    if (!tabId) return
+
+                    const tab = this.tabs.find(t => t.id === tabId)
+                    if (!tab) return
+
+                    const redirectUrl = payload.effects.redirect
+                    const isCreateCall = message.calls.some(c => c.method === 'create')
+
+                    delete payload.effects.redirect
+                    delete payload.effects.redirectUsingNavigate
+
+                    this.$nextTick(() => {
+                        this.clearTabDirty(tabId)
+
+                        if (tab.closeOnSave) {
+                            this._doRemoveTab(tabId)
+                        } else if (isCreateCall && tab.page === 'create') {
+                            this.transformCreateToEdit(tabId, redirectUrl)
+                        }
+                    })
+                })
+            })
+
         },
 
         loadFromStorage() {
@@ -190,15 +232,20 @@ export default function tabbedManager(config = {}) {
             if (!this.lazyLoad && !this.destroyInactive) return
 
             if (this.destroyInactive) {
+                // Pinned tabs are always kept alive, never evicted
+                const pinnedLoadedIds = this.loadedTabIds.filter(id =>
+                    this.tabs.find(t => t.id === id && t.pinned)
+                )
+
                 // LRU: move tabId to the end (most recent), trim to keepAlive
-                const lru = this.loadedTabIds.filter(id => id !== tabId)
+                const lru = this.loadedTabIds.filter(id => id !== tabId && !pinnedLoadedIds.includes(id))
                 lru.push(tabId)
 
                 // Already loaded and within keepAlive — no server call needed
                 if (this.loadedTabIds.includes(tabId) && lru.length <= this.keepAlive) return
 
-                // Evict oldest entries beyond keepAlive
-                const kept = lru.slice(-this.keepAlive)
+                // Evict oldest entries beyond keepAlive, then re-add pinned
+                const kept = [...new Set([...pinnedLoadedIds, ...lru.slice(-this.keepAlive)])]
 
                 this.loadingTabIds = [...this.loadingTabIds.filter(id => id !== tabId), tabId]
                 this.loadedTabIds = kept
@@ -237,6 +284,47 @@ export default function tabbedManager(config = {}) {
 
         clearTabDirty(tabId) {
             this.dirtyTabIds = this.dirtyTabIds.filter(id => id !== tabId)
+        },
+
+        transformCreateToEdit(tabId, redirectUrl) {
+            const tab = this.tabs.find(t => t.id === tabId)
+            if (!tab) return
+
+            const recordId = this.extractRecordIdFromUrl(redirectUrl)
+            if (!recordId) return
+
+            const wasActive = this.activeTabId === tabId
+            const newTabId = this.generateId()
+
+            tab.id = newTabId
+            tab.page = 'edit'
+            tab.recordId = recordId
+            tab.label = this.generateLabel(tab)
+
+            this.loadedTabIds = this.loadedTabIds.map(id => id === tabId ? newTabId : id)
+            if (wasActive) this.activeTabId = newTabId
+
+            this.saveToStorage()
+            this.wireSyncTabs()
+            this.$nextTick(() => this.recalcOverflow())
+        },
+
+        extractRecordIdFromUrl(url) {
+            try {
+                const pathname = new URL(url, window.location.origin).pathname
+                const segments = pathname.split('/').filter(Boolean)
+                const last = segments[segments.length - 1]
+
+                if (['edit', 'view'].includes(last)) {
+                    return segments[segments.length - 2] || null
+                }
+                if (!['create', 'index'].includes(last)) {
+                    return last
+                }
+                return null
+            } catch {
+                return null
+            }
         },
 
         setupDirtyListeners() {
@@ -326,7 +414,55 @@ export default function tabbedManager(config = {}) {
             }
         },
 
-        addTab({ resource, page, recordId = null, label = null, background = false, tabColor = null, tabBackground = null, tabTextColor = null, hoverCard = null, confirmOnClose = false }) {
+        // --- Pin ---
+
+        isTabPinned(tabId) {
+            const tab = this.tabs.find(t => t.id === tabId)
+            return tab?.pinned ?? false
+        },
+
+        pinTab(tabId) {
+            const tab = this.tabs.find(t => t.id === tabId)
+            if (!tab || tab.pinned) return
+
+            tab.pinned = true
+
+            // Move pinned tab to end of pinned group
+            const currentIndex = this.tabs.indexOf(tab)
+            const pinnedCount = this.tabs.filter(t => t.pinned).length
+            const targetIndex = pinnedCount - 1
+
+            if (currentIndex !== targetIndex) {
+                this.tabs.splice(currentIndex, 1)
+                this.tabs.splice(targetIndex, 0, tab)
+            }
+
+            this.reindex()
+            this.saveToStorage()
+            this.$nextTick(() => this.recalcOverflow())
+        },
+
+        unpinTab(tabId) {
+            const tab = this.tabs.find(t => t.id === tabId)
+            if (!tab || !tab.pinned) return
+
+            tab.pinned = false
+
+            // Move unpinned tab to right after the last pinned tab
+            const currentIndex = this.tabs.indexOf(tab)
+            const pinnedCount = this.tabs.filter(t => t.pinned).length
+
+            if (currentIndex !== pinnedCount) {
+                this.tabs.splice(currentIndex, 1)
+                this.tabs.splice(pinnedCount, 0, tab)
+            }
+
+            this.reindex()
+            this.saveToStorage()
+            this.$nextTick(() => this.recalcOverflow())
+        },
+
+        addTab({ resource, page, recordId = null, label = null, background = false, tabColor = null, tabBackground = null, tabTextColor = null, hoverCard = null, confirmOnClose = false, closeOnSave = false }) {
             const existing = this.tabs.find(t =>
                 t.resource === resource &&
                 t.page === page &&
@@ -353,6 +489,7 @@ export default function tabbedManager(config = {}) {
                 tabTextColor: tabTextColor ?? null,
                 hoverCard: hoverCard ?? null,
                 confirmOnClose: confirmOnClose,
+                closeOnSave: closeOnSave,
             }
 
             tab.label = this.generateLabel(tab)
@@ -421,7 +558,7 @@ export default function tabbedManager(config = {}) {
 
         closeOtherTabs(tabId) {
             const dirtyOthers = this.tabs.filter(t =>
-                t.id !== tabId && this.isTabDirty(t.id) && (this.confirmClose || t.confirmOnClose)
+                t.id !== tabId && !t.pinned && this.isTabDirty(t.id) && (this.confirmClose || t.confirmOnClose)
             )
 
             if (dirtyOthers.length > 0) {
@@ -435,8 +572,9 @@ export default function tabbedManager(config = {}) {
         },
 
         _doCloseOtherTabs(tabId) {
-            this.tabs = this.tabs.filter(t => t.id === tabId)
-            this.dirtyTabIds = this.dirtyTabIds.filter(id => id === tabId)
+            const removedIds = this.tabs.filter(t => t.id !== tabId && !t.pinned).map(t => t.id)
+            this.tabs = this.tabs.filter(t => t.id === tabId || t.pinned)
+            this.dirtyTabIds = this.dirtyTabIds.filter(id => !removedIds.includes(id))
             this.activeTabId = tabId
             this.reindex()
             this.saveToStorage()
@@ -446,7 +584,7 @@ export default function tabbedManager(config = {}) {
 
         closeAllTabs() {
             const dirtyTabs = this.tabs.filter(t =>
-                this.isTabDirty(t.id) && (this.confirmClose || t.confirmOnClose)
+                !t.pinned && this.isTabDirty(t.id) && (this.confirmClose || t.confirmOnClose)
             )
 
             if (dirtyTabs.length > 0) {
@@ -460,9 +598,18 @@ export default function tabbedManager(config = {}) {
 
         _doCloseAllTabs() {
             const hadTabs = this.tabs.length > 0
-            this.tabs = []
-            this.dirtyTabIds = []
-            this.activeTabId = null
+            const pinnedTabs = this.tabs.filter(t => t.pinned)
+            const removedIds = this.tabs.filter(t => !t.pinned).map(t => t.id)
+
+            this.tabs = pinnedTabs
+            this.dirtyTabIds = this.dirtyTabIds.filter(id => !removedIds.includes(id))
+
+            // Keep active tab if it's pinned, otherwise clear
+            if (this.activeTabId && !this.tabs.find(t => t.id === this.activeTabId)) {
+                this.activeTabId = null
+            }
+
+            this.reindex()
             this.saveToStorage()
             this.wireSyncTabs()
             this.togglePageContent()
@@ -544,6 +691,12 @@ export default function tabbedManager(config = {}) {
             if (fromIndex === toIndex) return
             if (fromIndex < 0 || fromIndex >= this.tabs.length) return
             if (toIndex < 0 || toIndex >= this.tabs.length) return
+
+            const movedTab = this.tabs[fromIndex]
+            const targetTab = this.tabs[toIndex]
+
+            // Prevent dragging between pinned and unpinned zones
+            if (movedTab.pinned !== targetTab.pinned) return
 
             const [moved] = this.tabs.splice(fromIndex, 1)
             this.tabs.splice(toIndex, 0, moved)
@@ -987,6 +1140,12 @@ export default function tabbedManager(config = {}) {
             if (!tabId) return
 
             switch (action) {
+                case 'pin':
+                    this.pinTab(tabId)
+                    break
+                case 'unpin':
+                    this.unpinTab(tabId)
+                    break
                 case 'rename':
                     this.startRename(tabId)
                     break

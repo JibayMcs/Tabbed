@@ -10,6 +10,7 @@
         'keepAlive' => $plugin->getKeepAlive(),
         'dropdown' => $plugin->getDropdown(),
         'confirmClose' => $plugin->getConfirmClose(),
+        'interceptRedirects' => $plugin->getInterceptRedirects(),
     ];
 @endphp
 
@@ -62,6 +63,7 @@
                             :data-tab-id="tab.id"
                             :class="{
                                 'fi-active': isActive(tab.id),
+                                'fi-pinned': tab.pinned,
                                 'fi-drag-over-before': isDragOver(tab.id, 'before'),
                                 'fi-drag-over-after': isDragOver(tab.id, 'after'),
                             }"
@@ -84,6 +86,13 @@
                             {{-- Icon --}}
                             <template x-if="showTabIcons && tabIcons[tab.resource]">
                                 <span x-html="tabIcons[tab.resource]"></span>
+                            </template>
+
+                            {{-- Pin icon --}}
+                            <template x-if="tab.pinned">
+                                <span class="fi-tabbed-bar-tab-pin-icon">
+                                    <x-filament::icon icon="heroicon-m-map-pin" class="fi-tabbed-bar-tab-pin-svg" />
+                                </span>
                             </template>
 
                             {{-- Label or rename input --}}
@@ -174,6 +183,11 @@
                     @mouseleave="hoverCardLeave(tab.id)"
                 >
                     <span x-show="showTabIcons && tabIcons[tab.resource]" x-html="tabIcons[tab.resource]"></span>
+                    <template x-if="tab.pinned">
+                        <span class="fi-tabbed-bar-tab-pin-icon">
+                            <x-filament::icon icon="heroicon-m-map-pin" class="fi-tabbed-bar-tab-pin-svg" />
+                        </span>
+                    </template>
                     <span class="fi-tabbed-overflow-menu-item-label" x-text="getTabLabel(tab)"></span>
                     <template x-if="isTabLoading(tab.id)">
                         <x-filament::loading-indicator class="fi-tabbed-bar-tab-loading-icon" />
@@ -221,6 +235,18 @@
         :style="`left: ${contextMenuX}px; top: ${contextMenuY}px`"
         @click.stop
     >
+        <template x-if="!isTabPinned(contextMenuTabId)">
+            <button type="button" class="fi-tabbed-context-menu-item" @click="contextMenuAction('pin')">
+                <x-filament::icon icon="heroicon-m-map-pin" class="fi-tabbed-context-menu-icon" />
+                <span>{{ __('tabbed::tabbed.pin') }}</span>
+            </button>
+        </template>
+        <template x-if="isTabPinned(contextMenuTabId)">
+            <button type="button" class="fi-tabbed-context-menu-item" @click="contextMenuAction('unpin')">
+                <x-filament::icon icon="heroicon-m-map-pin" class="fi-tabbed-context-menu-icon" />
+                <span>{{ __('tabbed::tabbed.unpin') }}</span>
+            </button>
+        </template>
         <button type="button" class="fi-tabbed-context-menu-item" @click="contextMenuAction('rename')">
             <x-filament::icon icon="heroicon-m-pencil-square" class="fi-tabbed-context-menu-icon" />
             <span>{{ __('tabbed::tabbed.rename') }}</span>

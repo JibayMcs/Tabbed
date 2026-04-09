@@ -22,8 +22,10 @@ A FilamentPHP v5 plugin that brings IDE/browser-style tabs to your panel. Open r
 - Lazy loading & destroy inactive (performance optimization)
 - Dropdown mode (compact button replacing the full tab bar)
 - Dirty state detection with unsaved changes confirmation modal
+- Post-save redirect interception (stay in tab after save, create-to-edit transformation)
+- Pinned tabs (anchored left, protected from bulk close, visually distinct)
 - Dark mode support
-- Translations: English & French
+- Translations: English, French & Spanish
 
 ## Installation
 
@@ -123,6 +125,7 @@ OpenInTabAction::make()
     ->tabBackground(Color::Red)                       // Background color
     ->tabTextColor(Color::Red)                        // Text color
     ->confirmOnClose()                                // Ask confirmation before closing if dirty
+    ->closeOnSave()                                   // Auto-close the tab after a successful save
 ```
 
 ### Tab colors
@@ -230,6 +233,7 @@ TabbedPlugin::make()
     ->lazyLoad()                                            // Only load tab content on first activation (default: off)
     ->destroyInactive()                                     // Destroy inactive tab components to save memory (default: off)
     ->confirmClose()                                        // Confirm before closing tabs with unsaved changes (default: off)
+    ->interceptRedirects()                                  // Block post-save redirects inside tabs (default: on)
 ```
 
 ### Performance: Lazy loading & destroy inactive
@@ -297,6 +301,35 @@ TabbedPlugin::make()->confirmClose()
 ```
 
 The dirty state resets automatically after a successful save (`save` or `create` Livewire calls). The confirmation modal also appears for "Close others" and "Close all" context menu actions when dirty tabs are involved.
+
+### Redirect interception
+
+By default, saving a form inside a tab stays in the tab instead of following Filament's redirect (which would navigate away from the tab system). This works for both Edit and Create pages:
+
+- **Edit page**: after save, the redirect is blocked and the user stays in the tab
+- **Create page**: after creating a record, the tab automatically transforms into an Edit tab for the new record (new tab ID, updated label and record ID)
+
+```php
+// Disable redirect interception globally (saves redirect normally)
+TabbedPlugin::make()->interceptRedirects(false)
+
+// Auto-close a tab after successful save (serial processing workflow)
+OpenInTabAction::make()->closeOnSave()
+```
+
+Notifications and other Livewire effects are preserved — only the redirect is blocked.
+
+### Pinned tabs
+
+Right-click a tab and select "Pin" to pin it. Pinned tabs are visually distinct (primary background + pin icon) and anchored to the left of the tab bar.
+
+**Pinned tab protections:**
+- "Close others" keeps pinned tabs + the target tab
+- "Close all" only closes unpinned tabs
+- Pinned tabs are never evicted by `destroyInactive` LRU
+- Drag & drop is constrained: pinned tabs can only be reordered among themselves
+
+The close button (x) still works on pinned tabs — pinning protects against bulk close, not individual close. Pin state is persisted in localStorage.
 
 ### Config file
 

@@ -695,6 +695,52 @@
     color: var(--primary-400);
 }
 
+/* Pinned tab */
+.fi-tabbed-bar-tab.fi-pinned {
+    background-color: var(--primary-50);
+    border-left: 3px solid var(--primary-400);
+}
+
+.fi-tabbed-bar-tab.fi-pinned:hover {
+    background-color: var(--primary-100);
+}
+
+:is(.dark) .fi-tabbed-bar-tab.fi-pinned {
+    background-color: rgba(var(--primary-400-rgb, 96 165 250), 0.1);
+    border-left-color: var(--primary-500);
+}
+
+:is(.dark) .fi-tabbed-bar-tab.fi-pinned:hover {
+    background-color: rgba(var(--primary-400-rgb, 96 165 250), 0.15);
+}
+
+.fi-tabbed-bar-tab.fi-pinned.fi-active {
+    background-color: var(--primary-100);
+    border-left-color: var(--primary-500);
+}
+
+:is(.dark) .fi-tabbed-bar-tab.fi-pinned.fi-active {
+    background-color: rgba(var(--primary-400-rgb, 96 165 250), 0.2);
+    border-left-color: var(--primary-400);
+}
+
+/* Pin icon */
+.fi-tabbed-bar-tab-pin-icon {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.fi-tabbed-bar-tab-pin-svg {
+    width: 0.75rem;
+    height: 0.75rem;
+    color: var(--primary-400);
+}
+
+:is(.dark) .fi-tabbed-bar-tab-pin-svg {
+    color: var(--primary-500);
+}
+
 /* Dirty indicator dot */
 .fi-tabbed-bar-tab-dirty {
     width: 0.5rem;
