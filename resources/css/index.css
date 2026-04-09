@@ -504,6 +504,155 @@
     border-top: none;
 }
 
+/* Dropdown trigger */
+.fi-tabbed-dropdown-trigger {
+    display: flex;
+    align-items: center;
+    padding-inline: 0.5rem;
+    padding-block: 0.375rem;
+}
+
+.fi-tabbed-dropdown-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.5rem;
+    border-radius: 0.375rem;
+    border: none;
+    cursor: pointer;
+    transition: all 150ms ease;
+    background-color: var(--gray-100);
+    color: var(--gray-600);
+}
+
+.fi-tabbed-dropdown-btn:hover {
+    background-color: var(--gray-200);
+    color: var(--gray-800);
+}
+
+:is(.dark) .fi-tabbed-dropdown-btn {
+    background-color: var(--gray-700);
+    color: var(--gray-300);
+}
+
+:is(.dark) .fi-tabbed-dropdown-btn:hover {
+    background-color: var(--gray-600);
+    color: var(--gray-100);
+}
+
+/* Dropdown button with color */
+.fi-tabbed-dropdown-btn-colored {
+    background-color: var(--c-500);
+    color: white;
+}
+
+.fi-tabbed-dropdown-btn-colored:hover {
+    background-color: var(--c-600);
+}
+
+:is(.dark) .fi-tabbed-dropdown-btn-colored {
+    background-color: var(--c-500);
+}
+
+:is(.dark) .fi-tabbed-dropdown-btn-colored:hover {
+    background-color: var(--c-400);
+}
+
+/* Dropdown button outlined */
+.fi-tabbed-dropdown-btn-outlined {
+    background-color: transparent;
+    border: 1px solid var(--gray-300);
+    color: var(--gray-600);
+}
+
+.fi-tabbed-dropdown-btn-outlined:hover {
+    background-color: var(--gray-50);
+}
+
+:is(.dark) .fi-tabbed-dropdown-btn-outlined {
+    border-color: var(--gray-600);
+    color: var(--gray-400);
+    background-color: transparent;
+}
+
+:is(.dark) .fi-tabbed-dropdown-btn-outlined:hover {
+    background-color: var(--gray-800);
+}
+
+/* Outlined + colored */
+.fi-tabbed-dropdown-btn-outlined.fi-tabbed-dropdown-btn-colored {
+    background-color: transparent;
+    border-color: var(--c-500);
+    color: var(--c-600);
+}
+
+.fi-tabbed-dropdown-btn-outlined.fi-tabbed-dropdown-btn-colored:hover {
+    background-color: var(--c-50);
+}
+
+:is(.dark) .fi-tabbed-dropdown-btn-outlined.fi-tabbed-dropdown-btn-colored {
+    border-color: var(--c-400);
+    color: var(--c-400);
+    background-color: transparent;
+}
+
+:is(.dark) .fi-tabbed-dropdown-btn-outlined.fi-tabbed-dropdown-btn-colored:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Dropdown icon */
+.fi-tabbed-dropdown-btn-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    flex-shrink: 0;
+}
+
+/* Dropdown label */
+.fi-tabbed-dropdown-btn-label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.25rem;
+    white-space: nowrap;
+}
+
+/* Dropdown badge */
+.fi-tabbed-dropdown-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.125rem;
+    height: 1.125rem;
+    padding-inline: 0.25rem;
+    border-radius: 9999px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1;
+    background-color: rgba(255, 255, 255, 0.25);
+    color: white;
+}
+
+/* Badge on outlined variant */
+.fi-tabbed-dropdown-btn-outlined .fi-tabbed-dropdown-badge {
+    background-color: var(--gray-200);
+    color: var(--gray-600);
+}
+
+:is(.dark) .fi-tabbed-dropdown-btn-outlined .fi-tabbed-dropdown-badge {
+    background-color: var(--gray-600);
+    color: var(--gray-200);
+}
+
+.fi-tabbed-dropdown-btn-outlined.fi-tabbed-dropdown-btn-colored .fi-tabbed-dropdown-badge {
+    background-color: var(--c-50);
+    color: var(--c-600);
+}
+
+:is(.dark) .fi-tabbed-dropdown-btn-outlined.fi-tabbed-dropdown-btn-colored .fi-tabbed-dropdown-badge {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--c-400);
+}
+
 /* Container — min-width: 0 prevents flex/grid items from expanding beyond parent */
 .fi-tabbed-container {
     display: grid;

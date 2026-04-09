@@ -8,6 +8,7 @@ export default function tabbedManager(config = {}) {
         showTabIcons: config.showTabIcons ?? true,
         lazyLoad: config.lazyLoad ?? false,
         destroyInactive: config.destroyInactive ?? false,
+        dropdownMode: config.dropdown ?? false,
         tabIcons: {},
         loadedTabIds: [],
 
@@ -49,8 +50,12 @@ export default function tabbedManager(config = {}) {
             // Toggle page content visibility on state changes
             this.$watch('activeTabId', () => this.togglePageContent())
 
-            // Observe tab bar DOM to detect overflow
-            this.setupOverflowObserver()
+            // Observe tab bar DOM to detect overflow (not needed in dropdown mode)
+            if (this.dropdownMode) {
+                this.recalcOverflow()
+            } else {
+                this.setupOverflowObserver()
+            }
 
             // Livewire dispatch (server-side: row click, action via Livewire)
             // Livewire.on passes named params as a flat object { resource, page, ... }
@@ -418,6 +423,12 @@ export default function tabbedManager(config = {}) {
         },
 
         recalcOverflow() {
+            if (this.dropdownMode) {
+                this.hasOverflow = this.tabs.length > 0
+                this.overflowTabs = [...this.tabs]
+                return
+            }
+
             const container = this._overflowContainer
             if (!container) return
 

@@ -24,6 +24,18 @@ class TabbedPlugin implements Plugin
 
     protected bool $destroyInactive = false;
 
+    protected bool $dropdown = false;
+
+    protected ?string $dropdownIcon = 'heroicon-m-squares-2x2';
+
+    protected ?string $dropdownLabel = null;
+
+    protected bool $dropdownCountBadge = true;
+
+    protected string $dropdownColor = 'primary';
+
+    protected bool $dropdownOutlined = false;
+
     public function getId(): string
     {
         return 'tabbed';
@@ -147,6 +159,53 @@ class TabbedPlugin implements Plugin
     public function getDestroyInactive(): bool
     {
         return $this->destroyInactive;
+    }
+
+    public function hasDropdown(
+        ?string $icon = 'heroicon-m-squares-2x2',
+        ?string $label = null,
+        bool $countBadge = true,
+        string $color = 'primary',
+        bool $outlined = false,
+    ): static {
+        $this->dropdown = true;
+        $this->dropdownIcon = $icon;
+        $this->dropdownLabel = $label;
+        $this->dropdownCountBadge = $countBadge;
+        $this->dropdownColor = $color;
+        $this->dropdownOutlined = $outlined;
+
+        return $this;
+    }
+
+    public function getDropdown(): bool
+    {
+        return $this->dropdown;
+    }
+
+    public function getDropdownIcon(): ?string
+    {
+        return $this->dropdownIcon;
+    }
+
+    public function getDropdownLabel(): ?string
+    {
+        return $this->dropdownLabel;
+    }
+
+    public function getDropdownCountBadge(): bool
+    {
+        return $this->dropdownCountBadge;
+    }
+
+    public function getDropdownColor(): string
+    {
+        return $this->dropdownColor;
+    }
+
+    public function getDropdownOutlined(): bool
+    {
+        return $this->dropdownOutlined;
     }
 
     public static function make(): static

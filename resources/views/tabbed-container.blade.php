@@ -7,6 +7,7 @@
         'showTabIcons' => $plugin->getShowTabIcons(),
         'lazyLoad' => $plugin->getLazyLoad(),
         'destroyInactive' => $plugin->getDestroyInactive(),
+        'dropdown' => $plugin->getDropdown(),
     ];
 @endphp
 
@@ -19,86 +20,119 @@
 >
     {{-- Tab bar — teleported to portal target at user-configured render hook --}}
     <template x-teleport="#fi-tabbed-bar-portal">
-        <div x-show="hasTabs" class="fi-tabbed-bar">
-            <div class="fi-tabbed-bar-tabs" role="tablist">
-                <template x-for="tab in tabs" :key="tab.id">
-                    <div
-                        class="fi-tabbed-bar-tab"
-                        :data-tab-id="tab.id"
-                        :class="{
-                            'fi-active': isActive(tab.id),
-                            'fi-drag-over-before': isDragOver(tab.id, 'before'),
-                            'fi-drag-over-after': isDragOver(tab.id, 'after'),
-                        }"
-                        :style="getTabStyle(tab)"
-                        role="tab"
-                        :aria-selected="isActive(tab.id)"
-                        @click="setActiveTab(tab.id)"
-                        @auxclick="onMiddleClick($event, tab.id)"
-                        @contextmenu="openContextMenu($event, tab.id)"
-                        @dblclick="startRename(tab.id)"
-                        draggable="true"
-                        @dragstart="onDragStart($event, tab.id)"
-                        @dragend="onDragEnd($event)"
-                        @dragover="onDragOver($event, tab.id)"
-                        @dragleave="onDragLeave($event, tab.id)"
-                        @drop="onDrop($event, tab.id)"
-                        @mouseenter="hoverCardEnter(tab.id, $el)"
-                        @mouseleave="hoverCardLeave(tab.id)"
-                    >
-                        {{-- Icon --}}
-                        <template x-if="showTabIcons && tabIcons[tab.resource]">
-                            <span x-html="tabIcons[tab.resource]"></span>
-                        </template>
-
-                        {{-- Label or rename input --}}
-                        <template x-if="!isRenaming(tab.id)">
-                            <span
-                                class="fi-tabbed-bar-tab-label"
-                                x-text="getTabLabel(tab)"
-                            ></span>
-                        </template>
-
-                        <template x-if="isRenaming(tab.id)">
-                            <input
-                                type="text"
-                                class="fi-tabbed-bar-tab-rename-input"
-                                x-model="renameValue"
-                                :data-rename-input="tab.id"
-                                @click.stop
-                                @keydown.enter.prevent="confirmRename()"
-                                @keydown.escape.prevent="cancelRename()"
-                                @blur="confirmRename()"
-                            />
-                        </template>
-
-                        <button
-                            type="button"
-                            class="fi-tabbed-bar-tab-close"
-                            @click.stop="removeTab(tab.id)"
-                            aria-label="{{ __('tabbed::tabbed.close_tab') }}"
-                        >
-                            <x-filament::icon
-                                icon="heroicon-m-x-mark"
-                                class="fi-tabbed-bar-tab-close-icon"
-                            />
-                        </button>
-                    </div>
-                </template>
-            </div>
-
-            {{-- Overflow button — always in layout, visibility toggled --}}
-            <div class="fi-tabbed-bar-overflow" :style="hasOverflow ? '' : 'visibility: hidden'">
+        @if($plugin->getDropdown())
+            {{-- Dropdown mode: compact trigger button --}}
+            <div x-show="hasTabs" class="fi-tabbed-dropdown-trigger">
                 <button
                     type="button"
-                    class="fi-tabbed-bar-overflow-btn"
+                    class="fi-tabbed-dropdown-btn fi-tabbed-dropdown-btn-colored @if($plugin->getDropdownOutlined()) fi-tabbed-dropdown-btn-outlined @endif"
+                    style="--c-500: var(--{{ $plugin->getDropdownColor() }}-500); --c-600: var(--{{ $plugin->getDropdownColor() }}-600); --c-400: var(--{{ $plugin->getDropdownColor() }}-400); --c-50: var(--{{ $plugin->getDropdownColor() }}-50);"
                     @click.stop="toggleOverflowMenu($event)"
                     aria-label="{{ __('tabbed::tabbed.all_tabs') }}"
                 >
-                    <x-filament::icon icon="heroicon-m-ellipsis-horizontal" class="fi-tabbed-bar-overflow-icon" />
+                    @if($plugin->getDropdownIcon())
+                        <x-filament::icon
+                            :icon="$plugin->getDropdownIcon()"
+                            class="fi-tabbed-dropdown-btn-icon"
+                        />
+                    @endif
+
+                    @if($plugin->getDropdownLabel())
+                        <span class="fi-tabbed-dropdown-btn-label">{{ $plugin->getDropdownLabel() }}</span>
+                    @endif
+
+                    @if($plugin->getDropdownCountBadge())
+                        <span
+                            class="fi-tabbed-dropdown-badge"
+                            x-text="tabCount"
+                            x-show="tabCount > 0"
+                        ></span>
+                    @endif
                 </button>
             </div>
-        </div>
+        @else
+            {{-- Normal mode: full tab bar --}}
+            <div x-show="hasTabs" class="fi-tabbed-bar">
+                <div class="fi-tabbed-bar-tabs" role="tablist">
+                    <template x-for="tab in tabs" :key="tab.id">
+                        <div
+                            class="fi-tabbed-bar-tab"
+                            :data-tab-id="tab.id"
+                            :class="{
+                                'fi-active': isActive(tab.id),
+                                'fi-drag-over-before': isDragOver(tab.id, 'before'),
+                                'fi-drag-over-after': isDragOver(tab.id, 'after'),
+                            }"
+                            :style="getTabStyle(tab)"
+                            role="tab"
+                            :aria-selected="isActive(tab.id)"
+                            @click="setActiveTab(tab.id)"
+                            @auxclick="onMiddleClick($event, tab.id)"
+                            @contextmenu="openContextMenu($event, tab.id)"
+                            @dblclick="startRename(tab.id)"
+                            draggable="true"
+                            @dragstart="onDragStart($event, tab.id)"
+                            @dragend="onDragEnd($event)"
+                            @dragover="onDragOver($event, tab.id)"
+                            @dragleave="onDragLeave($event, tab.id)"
+                            @drop="onDrop($event, tab.id)"
+                            @mouseenter="hoverCardEnter(tab.id, $el)"
+                            @mouseleave="hoverCardLeave(tab.id)"
+                        >
+                            {{-- Icon --}}
+                            <template x-if="showTabIcons && tabIcons[tab.resource]">
+                                <span x-html="tabIcons[tab.resource]"></span>
+                            </template>
+
+                            {{-- Label or rename input --}}
+                            <template x-if="!isRenaming(tab.id)">
+                                <span
+                                    class="fi-tabbed-bar-tab-label"
+                                    x-text="getTabLabel(tab)"
+                                ></span>
+                            </template>
+
+                            <template x-if="isRenaming(tab.id)">
+                                <input
+                                    type="text"
+                                    class="fi-tabbed-bar-tab-rename-input"
+                                    x-model="renameValue"
+                                    :data-rename-input="tab.id"
+                                    @click.stop
+                                    @keydown.enter.prevent="confirmRename()"
+                                    @keydown.escape.prevent="cancelRename()"
+                                    @blur="confirmRename()"
+                                />
+                            </template>
+
+                            <button
+                                type="button"
+                                class="fi-tabbed-bar-tab-close"
+                                @click.stop="removeTab(tab.id)"
+                                aria-label="{{ __('tabbed::tabbed.close_tab') }}"
+                            >
+                                <x-filament::icon
+                                    icon="heroicon-m-x-mark"
+                                    class="fi-tabbed-bar-tab-close-icon"
+                                />
+                            </button>
+                        </div>
+                    </template>
+                </div>
+
+                {{-- Overflow button — always in layout, visibility toggled --}}
+                <div class="fi-tabbed-bar-overflow" :style="hasOverflow ? '' : 'visibility: hidden'">
+                    <button
+                        type="button"
+                        class="fi-tabbed-bar-overflow-btn"
+                        @click.stop="toggleOverflowMenu($event)"
+                        aria-label="{{ __('tabbed::tabbed.all_tabs') }}"
+                    >
+                        <x-filament::icon icon="heroicon-m-ellipsis-horizontal" class="fi-tabbed-bar-overflow-icon" />
+                    </button>
+                </div>
+            </div>
+        @endif
     </template>
 
     {{-- Overflow dropdown — teleported to body to escape topbar clip --}}
