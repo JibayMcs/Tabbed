@@ -10,7 +10,7 @@ use JibayMcs\Tabbed\Livewire\TabbedContainer;
 
 class TabbedPlugin implements Plugin
 {
-    protected string $renderHookName = PanelsRenderHook::PAGE_START;
+    protected string $renderHookName = PanelsRenderHook::TOPBAR_LOGO_AFTER;
 
     protected ?string $defaultPage = null;
 

@@ -43,6 +43,8 @@
                         @dragover="onDragOver($event, tab.id)"
                         @dragleave="onDragLeave($event, tab.id)"
                         @drop="onDrop($event, tab.id)"
+                        @mouseenter="hoverCardEnter(tab.id, $el)"
+                        @mouseleave="hoverCardLeave(tab.id)"
                     >
                         {{-- Icon --}}
                         <template x-if="showTabIcons && tabIcons[tab.resource]">
@@ -120,6 +122,8 @@
                     :class="{ 'fi-active': isActive(tab.id) }"
                     @click="setActiveTab(tab.id); closeOverflowMenu()"
                     @auxclick="onMiddleClick($event, tab.id)"
+                    @mouseenter="hoverCardEnter(tab.id, $el)"
+                    @mouseleave="hoverCardLeave(tab.id)"
                 >
                     <span x-show="showTabIcons && tabIcons[tab.resource]" x-html="tabIcons[tab.resource]"></span>
                     <span class="fi-tabbed-overflow-menu-item-label" x-text="getTabLabel(tab)"></span>
@@ -137,6 +141,21 @@
                 </div>
             </template>
         </div>
+    </template>
+
+    {{-- Hover card — teleported to body for proper positioning --}}
+    <template x-teleport="body">
+        <template x-if="hoverCardVisible && hoverCardContent">
+            <div
+                class="fi-tabbed-hover-card"
+                :class="'fi-tabbed-hover-card-' + hoverCardPosition"
+                :style="`left: ${hoverCardX}px; top: ${hoverCardY}px`"
+                @mouseenter="hoverCardContentEnter()"
+                @mouseleave="hoverCardContentLeave()"
+            >
+                <div class="fi-tabbed-hover-card-content" x-html="hoverCardContent"></div>
+            </div>
+        </template>
     </template>
 
     {{-- Context menu --}}

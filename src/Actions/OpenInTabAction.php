@@ -3,13 +3,17 @@
 namespace JibayMcs\Tabbed\Actions;
 
 use Filament\Actions\Action;
+use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Js;
+use JibayMcs\Tabbed\Traits\HasHoverCard;
 use JibayMcs\Tabbed\TabbedPlugin;
 use Livewire\Livewire;
 
 class OpenInTabAction extends Action
 {
+    use HasHoverCard;
     protected ?string $tabbedPage = null;
 
     protected ?string $tabbedResource = null;
@@ -78,6 +82,23 @@ class OpenInTabAction extends Action
 
         if ($this->tabTextColor) {
             $data['tabTextColor'] = $this->tabTextColor;
+        }
+
+        if ($this->hasHoverCard && $this->hoverCardContentCallback) {
+            $content = ($this->hoverCardContentCallback)($record);
+
+            if ($content instanceof View) {
+                $content = $content->render();
+            } elseif ($content instanceof HtmlString) {
+                $content = $content->toHtml();
+            }
+
+            $data['hoverCard'] = [
+                'content' => (string) $content,
+                'position' => $this->hoverCardPosition->value,
+                'delay' => $this->hoverCardDelay,
+                'leaveDelay' => $this->hoverCardLeaveDelay,
+            ];
         }
 
         $jsData = $hasJsData ? Js::from($data) : $data;

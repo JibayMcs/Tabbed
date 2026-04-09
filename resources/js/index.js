@@ -32,6 +32,14 @@ export default function tabbedManager(config = {}) {
         hasOverflow: false,
         overflowTabs: [],
 
+        // Hover card state
+        hoverCardTabId: null,
+        hoverCardVisible: false,
+        hoverCardX: 0,
+        hoverCardY: 0,
+        _hoverCardTimeout: null,
+        _hoverCardLeaveTimeout: null,
+
         init() {
             this.loadFromStorage()
 
@@ -166,7 +174,7 @@ export default function tabbedManager(config = {}) {
             }
         },
 
-        addTab({ resource, page, recordId = null, label = null, background = false, tabColor = null, tabBackground = null, tabTextColor = null }) {
+        addTab({ resource, page, recordId = null, label = null, background = false, tabColor = null, tabBackground = null, tabTextColor = null, hoverCard = null }) {
             const existing = this.tabs.find(t =>
                 t.resource === resource &&
                 t.page === page &&
@@ -191,6 +199,7 @@ export default function tabbedManager(config = {}) {
                 tabColor: tabColor ?? null,
                 tabBackground: tabBackground ?? null,
                 tabTextColor: tabTextColor ?? null,
+                hoverCard: hoverCard ?? null,
             }
 
             tab.label = this.generateLabel(tab)
@@ -214,6 +223,9 @@ export default function tabbedManager(config = {}) {
         removeTab(tabId) {
             const index = this.tabs.findIndex(t => t.id === tabId)
             if (index === -1) return
+
+            this.dismissHoverCard()
+            this.closeOverflowMenu()
 
             const wasActive = this.activeTabId === tabId
             const removedTab = this.tabs[index]
@@ -263,6 +275,8 @@ export default function tabbedManager(config = {}) {
 
         setActiveTab(tabId) {
             if (!this.tabs.find(t => t.id === tabId)) return
+
+            this.dismissHoverCard()
 
             if (this.activeTabId === tabId) {
                 // Re-clicking active tab deactivates it = show page content
@@ -417,6 +431,8 @@ export default function tabbedManager(config = {}) {
         },
 
         toggleOverflowMenu(e) {
+            this.dismissHoverCard()
+
             if (this.showOverflowMenu) {
                 this.closeOverflowMenu()
                 return
@@ -455,6 +471,128 @@ export default function tabbedManager(config = {}) {
 
         closeOverflowMenu() {
             this.showOverflowMenu = false
+        },
+
+        // --- Hover Card ---
+
+        hoverCardEnter(tabId, el) {
+            const tab = this.tabs.find(t => t.id === tabId)
+            if (!tab?.hoverCard) return
+
+            clearTimeout(this._hoverCardLeaveTimeout)
+
+            if (this.hoverCardVisible && this.hoverCardTabId === tabId) return
+
+            clearTimeout(this._hoverCardTimeout)
+            this._hoverCardTimeout = setTimeout(() => {
+                this.hoverCardTabId = tabId
+                this.hoverCardVisible = true
+                this.$nextTick(() => this.positionHoverCard(el, tab.hoverCard.position))
+            }, tab.hoverCard.delay ?? 600)
+        },
+
+        hoverCardLeave(tabId) {
+            const tab = this.tabs.find(t => t.id === tabId)
+            if (!tab?.hoverCard) return
+
+            clearTimeout(this._hoverCardTimeout)
+
+            if (!this.hoverCardVisible) return
+
+            clearTimeout(this._hoverCardLeaveTimeout)
+            this._hoverCardLeaveTimeout = setTimeout(() => {
+                this.hoverCardVisible = false
+                this.hoverCardTabId = null
+            }, tab.hoverCard.leaveDelay ?? 500)
+        },
+
+        hoverCardContentEnter() {
+            clearTimeout(this._hoverCardLeaveTimeout)
+        },
+
+        hoverCardContentLeave() {
+            clearTimeout(this._hoverCardLeaveTimeout)
+            this._hoverCardLeaveTimeout = setTimeout(() => {
+                this.hoverCardVisible = false
+                this.hoverCardTabId = null
+            }, 300)
+        },
+
+        dismissHoverCard() {
+            clearTimeout(this._hoverCardTimeout)
+            clearTimeout(this._hoverCardLeaveTimeout)
+            this.hoverCardVisible = false
+            this.hoverCardTabId = null
+        },
+
+        get hoverCardTab() {
+            return this.tabs.find(t => t.id === this.hoverCardTabId) ?? null
+        },
+
+        get hoverCardContent() {
+            return this.hoverCardTab?.hoverCard?.content ?? ''
+        },
+
+        get hoverCardPosition() {
+            return this.hoverCardTab?.hoverCard?.position ?? 'bottom'
+        },
+
+        positionHoverCard(triggerEl, position) {
+            const card = document.querySelector('.fi-tabbed-hover-card')
+            if (!card || !triggerEl) return
+
+            const triggerRect = triggerEl.getBoundingClientRect()
+            const cardRect = card.getBoundingClientRect()
+            const gap = 8
+            const vw = window.innerWidth
+            const vh = window.innerHeight
+
+            let x = 0
+            let y = 0
+
+            switch (position) {
+                case 'top':
+                    x = triggerRect.left + (triggerRect.width - cardRect.width) / 2
+                    y = triggerRect.top - cardRect.height - gap
+                    break
+                case 'top-start':
+                    x = triggerRect.left
+                    y = triggerRect.top - cardRect.height - gap
+                    break
+                case 'top-end':
+                    x = triggerRect.right - cardRect.width
+                    y = triggerRect.top - cardRect.height - gap
+                    break
+                case 'bottom':
+                    x = triggerRect.left + (triggerRect.width - cardRect.width) / 2
+                    y = triggerRect.bottom + gap
+                    break
+                case 'bottom-start':
+                    x = triggerRect.left
+                    y = triggerRect.bottom + gap
+                    break
+                case 'bottom-end':
+                    x = triggerRect.right - cardRect.width
+                    y = triggerRect.bottom + gap
+                    break
+                case 'left':
+                    x = triggerRect.left - cardRect.width - gap
+                    y = triggerRect.top + (triggerRect.height - cardRect.height) / 2
+                    break
+                case 'right':
+                    x = triggerRect.right + gap
+                    y = triggerRect.top + (triggerRect.height - cardRect.height) / 2
+                    break
+            }
+
+            // Clamp to viewport
+            if (x < 8) x = 8
+            if (x + cardRect.width > vw - 8) x = vw - cardRect.width - 8
+            if (y < 8) y = 8
+            if (y + cardRect.height > vh - 8) y = vh - cardRect.height - 8
+
+            this.hoverCardX = x
+            this.hoverCardY = y
         },
 
         // --- Middle Click to Close ---

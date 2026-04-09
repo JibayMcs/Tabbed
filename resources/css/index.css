@@ -389,6 +389,121 @@
     height: 0.875rem;
 }
 
+/* Hover card */
+.fi-tabbed-hover-card {
+    position: fixed;
+    z-index: 100;
+    max-width: 24rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    background-color: white;
+    border: 1px solid var(--gray-200);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    pointer-events: auto;
+    animation: fi-tabbed-hover-card-in 150ms ease-out;
+}
+
+@keyframes fi-tabbed-hover-card-in {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+:is(.dark) .fi-tabbed-hover-card {
+    background-color: var(--gray-800);
+    border-color: var(--gray-700);
+}
+
+.fi-tabbed-hover-card-content {
+    font-size: 0.8125rem;
+    line-height: 1.375rem;
+    color: var(--gray-700);
+}
+
+:is(.dark) .fi-tabbed-hover-card-content {
+    color: var(--gray-300);
+}
+
+/* Hover card arrow */
+.fi-tabbed-hover-card::before {
+    content: '';
+    position: absolute;
+    width: 0.5rem;
+    height: 0.5rem;
+    background-color: white;
+    border: 1px solid var(--gray-200);
+    transform: rotate(45deg);
+}
+
+:is(.dark) .fi-tabbed-hover-card::before {
+    background-color: var(--gray-800);
+    border-color: var(--gray-700);
+}
+
+/* Arrow position per placement */
+.fi-tabbed-hover-card-bottom::before,
+.fi-tabbed-hover-card-bottom-start::before,
+.fi-tabbed-hover-card-bottom-end::before {
+    top: -0.3125rem;
+    left: 50%;
+    margin-left: -0.25rem;
+    border-right: none;
+    border-bottom: none;
+}
+
+.fi-tabbed-hover-card-bottom-start::before {
+    left: 1rem;
+    margin-left: 0;
+}
+
+.fi-tabbed-hover-card-bottom-end::before {
+    left: auto;
+    right: 1rem;
+    margin-left: 0;
+}
+
+.fi-tabbed-hover-card-top::before,
+.fi-tabbed-hover-card-top-start::before,
+.fi-tabbed-hover-card-top-end::before {
+    bottom: -0.3125rem;
+    left: 50%;
+    margin-left: -0.25rem;
+    border-left: none;
+    border-top: none;
+}
+
+.fi-tabbed-hover-card-top-start::before {
+    left: 1rem;
+    margin-left: 0;
+}
+
+.fi-tabbed-hover-card-top-end::before {
+    left: auto;
+    right: 1rem;
+    margin-left: 0;
+}
+
+.fi-tabbed-hover-card-left::before {
+    right: -0.3125rem;
+    top: 50%;
+    margin-top: -0.25rem;
+    border-left: none;
+    border-bottom: none;
+}
+
+.fi-tabbed-hover-card-right::before {
+    left: -0.3125rem;
+    top: 50%;
+    margin-top: -0.25rem;
+    border-right: none;
+    border-top: none;
+}
+
 /* Container — min-width: 0 prevents flex/grid items from expanding beyond parent */
 .fi-tabbed-container {
     display: grid;
