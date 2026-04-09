@@ -21,6 +21,7 @@ A FilamentPHP v5 plugin that brings IDE/browser-style tabs to your panel. Open r
 - Hover cards on tabs (rich tooltip with custom content on hover)
 - Lazy loading & destroy inactive (performance optimization)
 - Dropdown mode (compact button replacing the full tab bar)
+- Dirty state detection with unsaved changes confirmation modal
 - Dark mode support
 - Translations: English & French
 
@@ -121,6 +122,7 @@ OpenInTabAction::make()
     ->tabColor(Color::Red)                            // Accent color (left border indicator)
     ->tabBackground(Color::Red)                       // Background color
     ->tabTextColor(Color::Red)                        // Text color
+    ->confirmOnClose()                                // Ask confirmation before closing if dirty
 ```
 
 ### Tab colors
@@ -227,6 +229,7 @@ TabbedPlugin::make()
     ->showTabIcons(false)                                   // Hide resource icons in tabs (default: true)
     ->lazyLoad()                                            // Only load tab content on first activation (default: off)
     ->destroyInactive()                                     // Destroy inactive tab components to save memory (default: off)
+    ->confirmClose()                                        // Confirm before closing tabs with unsaved changes (default: off)
 ```
 
 ### Performance: Lazy loading & destroy inactive
@@ -276,6 +279,24 @@ TabbedPlugin::make()->hasDropdown(icon: 'heroicon-m-squares-2x2', label: 'Tabs')
 ```
 
 Clicking the button opens a dropdown listing all tabs with icons, active indicator, close buttons, and hover cards. All existing features (lazy load, middle-click, persistence) work in dropdown mode.
+
+### Dirty state & close confirmation
+
+The plugin detects unsaved changes in tab forms. When a form field is modified, an orange dot appears on the tab. If confirmation is enabled, closing a dirty tab shows a Filament-style modal instead of closing immediately.
+
+```php
+// Global: all dirty tabs ask confirmation before closing
+TabbedPlugin::make()->confirmClose()
+
+// Per-tab: only specific actions ask confirmation
+OpenInTabAction::make()->confirmOnClose()
+
+// Both can be combined: global acts as a default, per-tab overrides
+TabbedPlugin::make()->confirmClose()
+// A tab without ->confirmOnClose() will still ask because of the global setting
+```
+
+The dirty state resets automatically after a successful save (`save` or `create` Livewire calls). The confirmation modal also appears for "Close others" and "Close all" context menu actions when dirty tabs are involved.
 
 ### Config file
 
