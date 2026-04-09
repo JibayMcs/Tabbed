@@ -948,6 +948,8 @@ export default function tabbedManager(config = {}) {
             e.preventDefault()
             e.stopPropagation()
 
+            this.dismissHoverCard()
+
             this.contextMenuTabId = tabId
             this.contextMenuX = e.clientX
             this.contextMenuY = e.clientY
