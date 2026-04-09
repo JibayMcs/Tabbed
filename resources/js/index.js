@@ -61,6 +61,12 @@ export default function tabbedManager(config = {}) {
         dirtyModalTabId: null,
         dirtyModalMode: 'single',
 
+        // Keyboard shortcuts
+        shortcuts: config.shortcuts ?? false,
+
+        // Closed tabs history (LIFO stack, max 10)
+        closedTabsHistory: [],
+
         // Hover card state
         hoverCardTabId: null,
         hoverCardVisible: false,
@@ -193,6 +199,36 @@ export default function tabbedManager(config = {}) {
                     })
                 })
             })
+
+            // Keyboard shortcuts
+            if (this.shortcuts) {
+                document.addEventListener('keydown', (e) => {
+                    // Ignore when typing in form fields
+                    const tag = e.target.tagName
+                    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag) || e.target.isContentEditable) return
+
+                    const pressed = this._parseKeyEvent(e)
+                    if (!pressed) return
+
+                    if (pressed === this.shortcuts.nextTab) {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        this.navigateTab(1)
+                    } else if (pressed === this.shortcuts.prevTab) {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        this.navigateTab(-1)
+                    } else if (pressed === this.shortcuts.closeTab) {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        this.closeActiveTab()
+                    } else if (pressed === this.shortcuts.reopenTab) {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        this.reopenLastClosedTab()
+                    }
+                })
+            }
 
         },
 
@@ -604,6 +640,9 @@ export default function tabbedManager(config = {}) {
             const wasActive = this.activeTabId === tabId
             const removedTab = this.tabs[index]
 
+            // Save to history for reopen
+            this._pushToHistory(removedTab)
+
             this.tabs.splice(index, 1)
             this.clearTabDirty(tabId)
             this.reindex()
@@ -814,6 +853,88 @@ export default function tabbedManager(config = {}) {
 
         canClose(tab) {
             return tab.canClose !== false
+        },
+
+        // --- Keyboard Shortcuts ---
+
+        _parseKeyEvent(e) {
+            const parts = []
+            if (e.ctrlKey || e.metaKey) parts.push('ctrl')
+            if (e.altKey) parts.push('alt')
+            if (e.shiftKey) parts.push('shift')
+
+            const key = e.key.toLowerCase()
+            // Normalize arrow keys and common names
+            const keyMap = {
+                'arrowleft': 'left',
+                'arrowright': 'right',
+                'arrowup': 'up',
+                'arrowdown': 'down',
+            }
+            const normalizedKey = keyMap[key] ?? key
+            if (['control', 'alt', 'shift', 'meta'].includes(normalizedKey)) return null
+
+            parts.push(normalizedKey)
+            return parts.join('+')
+        },
+
+        navigateTab(direction) {
+            if (this.tabs.length === 0) return
+
+            if (!this.activeTabId) {
+                const index = direction > 0 ? 0 : this.tabs.length - 1
+                this.setActiveTab(this.tabs[index].id)
+                return
+            }
+
+            const currentIndex = this.tabs.findIndex(t => t.id === this.activeTabId)
+            if (currentIndex === -1) return
+
+            let newIndex = currentIndex + direction
+            if (newIndex >= this.tabs.length) newIndex = 0
+            if (newIndex < 0) newIndex = this.tabs.length - 1
+
+            this.setActiveTab(this.tabs[newIndex].id)
+        },
+
+        closeActiveTab() {
+            if (!this.activeTabId) return
+            this.removeTab(this.activeTabId)
+        },
+
+        reopenLastClosedTab() {
+            if (this.closedTabsHistory.length === 0) return
+
+            const closedTab = this.closedTabsHistory.pop()
+
+            this.addTab({
+                resource: closedTab.resource,
+                page: closedTab.page,
+                recordId: closedTab.recordId,
+                label: closedTab.customLabel,
+                tabColor: closedTab.tabColor,
+                tabBackground: closedTab.tabBackground,
+                tabTextColor: closedTab.tabTextColor,
+                hoverCard: closedTab.hoverCard,
+                confirmOnClose: closedTab.confirmOnClose,
+                closeOnSave: closedTab.closeOnSave,
+                canReorder: closedTab.canReorder,
+                canRename: closedTab.canRename,
+                canPin: closedTab.canPin,
+                canDuplicate: closedTab.canDuplicate,
+                canClose: closedTab.canClose,
+            })
+        },
+
+        _pushToHistory(tab) {
+            this.closedTabsHistory.push({ ...tab })
+            if (this.closedTabsHistory.length > 10) {
+                this.closedTabsHistory.shift()
+            }
+        },
+
+        get hasClosedHistory() {
+            return this.closedTabsHistory.length > 0
         },
 
         // --- Overflow Menu ---
@@ -1294,6 +1415,9 @@ export default function tabbedManager(config = {}) {
                     break
                 case 'close-all':
                     this.closeAllTabs()
+                    break
+                case 'reopen':
+                    this.reopenLastClosedTab()
                     break
             }
         },

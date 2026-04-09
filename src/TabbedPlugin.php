@@ -54,6 +54,15 @@ class TabbedPlugin implements Plugin
 
     protected bool $allowCloseAll = true;
 
+    protected bool|array $shortcuts = false;
+
+    protected array $defaultShortcuts = [
+        'nextTab' => 'ctrl+alt+right',
+        'prevTab' => 'ctrl+alt+left',
+        'closeTab' => 'alt+w',
+        'reopenTab' => 'alt+shift+t',
+    ];
+
     public function getId(): string
     {
         return 'tabbed';
@@ -328,6 +337,42 @@ class TabbedPlugin implements Plugin
     public function getAllowCloseAll(): bool
     {
         return $this->allowCloseAll;
+    }
+
+    public function keyboardShortcuts(
+        bool|string $nextTab = true,
+        ?string $prevTab = null,
+        ?string $closeTab = null,
+        ?string $reopenTab = null,
+    ): static {
+        if ($nextTab === false) {
+            $this->shortcuts = false;
+
+            return $this;
+        }
+
+        $this->shortcuts = $this->defaultShortcuts;
+
+        // If called with named params, override defaults
+        if (is_string($nextTab)) {
+            $this->shortcuts['nextTab'] = $nextTab;
+        }
+        if ($prevTab !== null) {
+            $this->shortcuts['prevTab'] = $prevTab;
+        }
+        if ($closeTab !== null) {
+            $this->shortcuts['closeTab'] = $closeTab;
+        }
+        if ($reopenTab !== null) {
+            $this->shortcuts['reopenTab'] = $reopenTab;
+        }
+
+        return $this;
+    }
+
+    public function getKeyboardShortcuts(): bool|array
+    {
+        return $this->shortcuts;
     }
 
     public static function make(): static

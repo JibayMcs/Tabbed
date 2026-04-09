@@ -15,6 +15,7 @@ return [
     'unpin' => 'Unpin',
     'search_tabs' => 'Search tabs...',
     'no_results' => 'No results',
+    'reopen_closed' => 'Reopen closed tab',
     'cancel' => 'Cancel',
     'close_anyway' => 'Close anyway',
 ];

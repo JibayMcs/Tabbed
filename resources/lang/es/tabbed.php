@@ -15,6 +15,7 @@ return [
     'unpin' => 'Desfijar',
     'search_tabs' => 'Buscar pestañas...',
     'no_results' => 'Sin resultados',
+    'reopen_closed' => 'Reabrir pestaña cerrada',
     'cancel' => 'Cancelar',
     'close_anyway' => 'Cerrar de todos modos',
 ];

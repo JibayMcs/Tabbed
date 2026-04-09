@@ -15,6 +15,7 @@ return [
     'unpin' => 'Désépingler',
     'search_tabs' => 'Rechercher un onglet...',
     'no_results' => 'Aucun résultat',
+    'reopen_closed' => 'Rouvrir le dernier fermé',
     'cancel' => 'Annuler',
     'close_anyway' => 'Fermer quand même',
 ];

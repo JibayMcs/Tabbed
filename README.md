@@ -27,6 +27,8 @@ A FilamentPHP v5 plugin that brings IDE/browser-style tabs to your panel. Open r
 - Tab search in overflow/dropdown menu (filter by name, keyboard navigation)
 - Tab duplication via context menu
 - Granular permissions (global + per-tab with `$record` closures)
+- Keyboard shortcuts (configurable, no browser conflicts)
+- Reopen last closed tab (history stack, context menu + shortcut)
 - Dark mode support
 - Translations: English, French & Spanish
 
@@ -260,7 +262,41 @@ TabbedPlugin::make()
     ->allowDuplicate(false)                                 // Disable tab duplication (default: on)
     ->allowCloseOthers(false)                               // Hide "Close others" from context menu (default: on)
     ->allowCloseAll(false)                                  // Hide "Close all" from context menu (default: on)
+    ->keyboardShortcuts()                                   // Enable keyboard shortcuts with defaults (default: off)
 ```
+
+### Keyboard shortcuts
+
+Enable keyboard shortcuts for power-user navigation. Disabled by default to avoid unexpected behavior.
+
+```php
+// Enable with default shortcuts
+TabbedPlugin::make()->keyboardShortcuts()
+
+// Custom shortcuts
+TabbedPlugin::make()->keyboardShortcuts(
+    nextTab: 'ctrl+alt+right',   // Next tab (default)
+    prevTab: 'ctrl+alt+left',   // Previous tab (default)
+    closeTab: 'alt+w',          // Close active tab (default)
+    reopenTab: 'alt+shift+t',   // Reopen last closed tab (default)
+)
+
+// Disable
+TabbedPlugin::make()->keyboardShortcuts(false)
+```
+
+**Default shortcuts:**
+
+| Action | Shortcut |
+|---|---|
+| Next tab | `Ctrl+Alt+Right` |
+| Previous tab | `Ctrl+Alt+Left` |
+| Close active tab | `Alt+W` |
+| Reopen last closed | `Alt+Shift+T` |
+
+Shortcuts are ignored when an input, textarea, or select is focused. They use `Alt` as the primary modifier to avoid conflicts with browser shortcuts (`Ctrl+Tab`, `Ctrl+W`, etc.).
+
+Closed tabs are stored in a session-only history stack (max 10). You can also reopen them via the right-click context menu ("Reopen closed tab").
 
 ### Performance: Lazy loading & destroy inactive
 

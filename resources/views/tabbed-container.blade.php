@@ -17,6 +17,7 @@
         'allowDuplicate' => $plugin->getAllowDuplicate(),
         'allowCloseOthers' => $plugin->getAllowCloseOthers(),
         'allowCloseAll' => $plugin->getAllowCloseAll(),
+        'shortcuts' => $plugin->getKeyboardShortcuts(),
     ];
 @endphp
 
@@ -293,6 +294,12 @@
             <button type="button" class="fi-tabbed-context-menu-item" @click="contextMenuAction('close')">
                 <x-filament::icon icon="heroicon-m-x-mark" class="fi-tabbed-context-menu-icon" />
                 <span>{{ __('tabbed::tabbed.close') }}</span>
+            </button>
+        </template>
+        <template x-if="hasClosedHistory">
+            <button type="button" class="fi-tabbed-context-menu-item" @click="contextMenuAction('reopen')">
+                <x-filament::icon icon="heroicon-m-arrow-uturn-left" class="fi-tabbed-context-menu-icon" />
+                <span>{{ __('tabbed::tabbed.reopen_closed') }}</span>
             </button>
         </template>
         <template x-if="allowCloseOthers || allowCloseAll">
