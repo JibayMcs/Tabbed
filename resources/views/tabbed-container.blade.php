@@ -115,15 +115,26 @@
             @click.stop
         >
             <template x-for="tab in overflowTabs" :key="'overflow-' + tab.id">
-                <button
-                    type="button"
+                <div
                     class="fi-tabbed-overflow-menu-item"
                     :class="{ 'fi-active': isActive(tab.id) }"
                     @click="setActiveTab(tab.id); closeOverflowMenu()"
+                    @auxclick="onMiddleClick($event, tab.id)"
                 >
                     <span x-show="showTabIcons && tabIcons[tab.resource]" x-html="tabIcons[tab.resource]"></span>
                     <span class="fi-tabbed-overflow-menu-item-label" x-text="getTabLabel(tab)"></span>
-                </button>
+                    <button
+                        type="button"
+                        class="fi-tabbed-overflow-menu-item-close"
+                        @click.stop="removeTab(tab.id)"
+                        aria-label="{{ __('tabbed::tabbed.close_tab') }}"
+                    >
+                        <x-filament::icon
+                            icon="heroicon-m-x-mark"
+                            class="fi-tabbed-overflow-menu-item-close-icon"
+                        />
+                    </button>
+                </div>
             </template>
         </div>
     </template>

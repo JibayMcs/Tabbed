@@ -38,35 +38,35 @@
     font-size: 0.8125rem;
     line-height: 1.25rem;
     font-weight: 500;
-    color: rgb(107 114 128); /* gray-500 */
+    color: var(--gray-500); /* gray-500 */
     transition: all 150ms ease;
     user-select: none;
     max-width: 12rem;
 }
 
 .fi-tabbed-bar-tab:hover {
-    background-color: rgb(243 244 246); /* gray-100 */
-    color: rgb(55 65 81); /* gray-700 */
+    background-color: var(--gray-100); /* gray-100 */
+    color: var(--gray-700); /* gray-700 */
 }
 
 :is(.dark) .fi-tabbed-bar-tab {
-    color: rgb(156 163 175); /* gray-400 */
+    color: var(--gray-400); /* gray-400 */
 }
 
 :is(.dark) .fi-tabbed-bar-tab:hover {
-    background-color: rgb(55 65 81); /* gray-700 */
-    color: rgb(229 231 235); /* gray-200 */
+    background-color: var(--gray-700); /* gray-700 */
+    color: var(--gray-200); /* gray-200 */
 }
 
 /* Active tab */
 .fi-tabbed-bar-tab.fi-active {
-    background-color: rgb(243 244 246); /* gray-100 */
+    background-color: var(--gray-100); /* gray-100 */
     color: var(--primary-600);
     box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 }
 
 :is(.dark) .fi-tabbed-bar-tab.fi-active {
-    background-color: rgb(55 65 81); /* gray-700 */
+    background-color: var(--gray-700); /* gray-700 */
     color: var(--primary-400);
 }
 
@@ -91,7 +91,7 @@
     flex-shrink: 0;
     border-radius: 0.25rem;
     padding: 0.0625rem;
-    color: rgb(156 163 175); /* gray-400 */
+    color: var(--gray-400); /* gray-400 */
     transition: all 150ms ease;
     opacity: 0;
 }
@@ -102,13 +102,13 @@
 }
 
 .fi-tabbed-bar-tab-close:hover {
-    background-color: rgb(229 231 235); /* gray-200 */
-    color: rgb(107 114 128); /* gray-500 */
+    background-color: var(--gray-200); /* gray-200 */
+    color: var(--gray-500); /* gray-500 */
 }
 
 :is(.dark) .fi-tabbed-bar-tab-close:hover {
-    background-color: rgb(75 85 99); /* gray-600 */
-    color: rgb(209 213 219); /* gray-300 */
+    background-color: var(--gray-600); /* gray-600 */
+    color: var(--gray-300); /* gray-300 */
 }
 
 .fi-tabbed-bar-tab-close-icon {
@@ -141,7 +141,7 @@
     line-height: 1.25rem;
     font-weight: 500;
     background-color: white;
-    color: rgb(17 24 39); /* gray-900 */
+    color: var(--gray-900); /* gray-900 */
     outline: none;
 }
 
@@ -150,8 +150,8 @@
 }
 
 :is(.dark) .fi-tabbed-bar-tab-rename-input {
-    background-color: rgb(17 24 39); /* gray-900 */
-    color: rgb(243 244 246); /* gray-100 */
+    background-color: var(--gray-900); /* gray-900 */
+    color: var(--gray-100); /* gray-100 */
     border-color: var(--primary-400);
 }
 
@@ -167,13 +167,13 @@
     padding-block: 0.25rem;
     border-radius: 0.5rem;
     background-color: white;
-    border: 1px solid rgb(229 231 235); /* gray-200 */
+    border: 1px solid var(--gray-200); /* gray-200 */
     box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 :is(.dark) .fi-tabbed-context-menu {
-    background-color: rgb(31 41 55); /* gray-800 */
-    border-color: rgb(55 65 81); /* gray-700 */
+    background-color: var(--gray-800); /* gray-800 */
+    border-color: var(--gray-700); /* gray-700 */
 }
 
 .fi-tabbed-context-menu-item {
@@ -185,7 +185,7 @@
     padding-block: 0.375rem;
     font-size: 0.8125rem;
     line-height: 1.25rem;
-    color: rgb(55 65 81); /* gray-700 */
+    color: var(--gray-500); /* gray-500 */
     cursor: pointer;
     transition: background-color 150ms ease;
     border: none;
@@ -194,23 +194,23 @@
 }
 
 .fi-tabbed-context-menu-item:hover {
-    background-color: rgb(243 244 246); /* gray-100 */
+    background-color: var(--gray-100); /* gray-100 */
 }
 
 :is(.dark) .fi-tabbed-context-menu-item {
-    color: rgb(209 213 219); /* gray-300 */
+    color: var(--gray-300); /* gray-300 */
 }
 
 :is(.dark) .fi-tabbed-context-menu-item:hover {
-    background-color: rgb(55 65 81); /* gray-700 */
+    background-color: var(--gray-700); /* gray-700 */
 }
 
 .fi-tabbed-context-menu-item-danger {
-    color: rgb(239 68 68); /* red-500 */
+    color: var(--danger-500); /* red-500 */
 }
 
 .fi-tabbed-context-menu-item-danger:hover {
-    background-color: rgb(254 242 242); /* red-50 */
+    background-color: var(--danger-50); /* red-50 */
 }
 
 :is(.dark) .fi-tabbed-context-menu-item-danger {
@@ -230,11 +230,11 @@
 .fi-tabbed-context-menu-separator {
     height: 1px;
     margin-block: 0.25rem;
-    background-color: rgb(229 231 235); /* gray-200 */
+    background-color: var(--gray-200); /* gray-200 */
 }
 
 :is(.dark) .fi-tabbed-context-menu-separator {
-    background-color: rgb(55 65 81); /* gray-700 */
+    background-color: var(--gray-700); /* gray-700 */
 }
 
 /* Overflow button */
@@ -252,7 +252,7 @@
     justify-content: center;
     padding: 0.375rem;
     border-radius: 0.375rem;
-    color: rgb(107 114 128); /* gray-500 */
+    color: var(--gray-500); /* gray-500 */
     cursor: pointer;
     border: none;
     background: none;
@@ -260,17 +260,17 @@
 }
 
 .fi-tabbed-bar-overflow-btn:hover {
-    background-color: rgb(243 244 246); /* gray-100 */
-    color: rgb(55 65 81); /* gray-700 */
+    background-color: var(--gray-100); /* gray-100 */
+    color: var(--gray-700); /* gray-700 */
 }
 
 :is(.dark) .fi-tabbed-bar-overflow-btn {
-    color: rgb(156 163 175); /* gray-400 */
+    color: var(--gray-400); /* gray-400 */
 }
 
 :is(.dark) .fi-tabbed-bar-overflow-btn:hover {
-    background-color: rgb(55 65 81); /* gray-700 */
-    color: rgb(229 231 235); /* gray-200 */
+    background-color: var(--gray-700); /* gray-700 */
+    color: var(--gray-200); /* gray-200 */
 }
 
 .fi-tabbed-bar-overflow-icon {
@@ -286,15 +286,16 @@
     max-height: 20rem;
     overflow-y: auto;
     padding-block: 0.25rem;
+    padding-inline: .25rem;
     border-radius: 0.5rem;
     background-color: white;
-    border: 1px solid rgb(229 231 235); /* gray-200 */
+    border: 1px solid var(--gray-200); /* gray-200 */
     box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 :is(.dark) .fi-tabbed-overflow-menu {
-    background-color: rgb(31 41 55); /* gray-800 */
-    border-color: rgb(55 65 81); /* gray-700 */
+    background-color: var(--gray-900); /* gray-900 */
+    border-color: var(--gray-700); /* gray-700 */
 }
 
 .fi-tabbed-overflow-menu-item {
@@ -306,41 +307,86 @@
     padding-block: 0.375rem;
     font-size: 0.8125rem;
     line-height: 1.25rem;
-    color: rgb(55 65 81); /* gray-700 */
+    color: var(--gray-700); /* gray-700 */
     cursor: pointer;
     transition: background-color 150ms ease;
     border: none;
     background: none;
     text-align: start;
+    border-radius: .225rem;
 }
 
 .fi-tabbed-overflow-menu-item:hover {
-    background-color: rgb(243 244 246); /* gray-100 */
+    background-color: var(--gray-100); /* gray-100 */
 }
 
 :is(.dark) .fi-tabbed-overflow-menu-item {
-    color: rgb(209 213 219); /* gray-300 */
+    color: var(--gray-300); /* gray-300 */
 }
 
 :is(.dark) .fi-tabbed-overflow-menu-item:hover {
-    background-color: rgb(55 65 81); /* gray-700 */
+    background-color: var(--gray-700); /* gray-700 */
 }
 
 .fi-tabbed-overflow-menu-item.fi-active {
     color: var(--primary-600);
-    background-color: rgb(243 244 246); /* gray-100 */
+    background-color: var(--gray-100); /* gray-100 */
 }
 
 :is(.dark) .fi-tabbed-overflow-menu-item.fi-active {
     color: var(--primary-400);
-    background-color: rgb(55 65 81); /* gray-700 */
+    background-color: var(--gray-700); /* gray-700 */
 }
 
 .fi-tabbed-overflow-menu-item-label {
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
+    cursor: pointer;
     white-space: nowrap;
+    font-size: .8125rem;
+    line-height: 1.25rem;
+    font-weight: 500;
+    color: var(--gray-500);
+}
+
+:is(.dark) .fi-tabbed-overflow-menu-item-label {
+    color: var(--gray-400);
+}
+
+    /* Overflow menu item close button */
+.fi-tabbed-overflow-menu-item-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 0.25rem;
+    padding: 0.125rem;
+    color: var(--gray-400); /* gray-400 */
+    transition: all 150ms ease;
+    opacity: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+.fi-tabbed-overflow-menu-item:hover .fi-tabbed-overflow-menu-item-close {
+    opacity: 1;
+}
+
+.fi-tabbed-overflow-menu-item-close:hover {
+    background-color: var(--gray-200); /* gray-200 */
+    color: var(--gray-500); /* gray-500 */
+}
+
+:is(.dark) .fi-tabbed-overflow-menu-item-close:hover {
+    background-color: var(--gray-600); /* gray-600 */
+    color: var(--gray-300); /* gray-300 */
+}
+
+.fi-tabbed-overflow-menu-item-close-icon {
+    width: 0.875rem;
+    height: 0.875rem;
 }
 
 /* Container — min-width: 0 prevents flex/grid items from expanding beyond parent */
