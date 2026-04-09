@@ -10,6 +10,7 @@ return [
     'all_tabs' => 'Tous les onglets',
     'unsaved_changes' => 'Modifications non sauvegardées',
     'unsaved_changes_description' => 'Cet onglet contient des modifications non sauvegardées. Êtes-vous sûr de vouloir le fermer ?',
+    'duplicate' => 'Dupliquer',
     'pin' => 'Épingler',
     'unpin' => 'Désépingler',
     'search_tabs' => 'Rechercher un onglet...',

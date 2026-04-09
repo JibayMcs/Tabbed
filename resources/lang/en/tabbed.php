@@ -10,6 +10,7 @@ return [
     'all_tabs' => 'All tabs',
     'unsaved_changes' => 'Unsaved changes',
     'unsaved_changes_description' => 'This tab contains unsaved changes. Are you sure you want to close it?',
+    'duplicate' => 'Duplicate',
     'pin' => 'Pin',
     'unpin' => 'Unpin',
     'search_tabs' => 'Search tabs...',

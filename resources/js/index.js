@@ -514,6 +514,53 @@ export default function tabbedManager(config = {}) {
             return tab
         },
 
+        duplicateTab(tabId) {
+            const original = this.tabs.find(t => t.id === tabId)
+            if (!original) return
+
+            const originalIndex = this.tabs.indexOf(original)
+
+            // Count existing duplicates to generate suffix
+            const dupeCount = this.tabs.filter(t =>
+                t.resource === original.resource &&
+                t.page === original.page &&
+                t.recordId === original.recordId
+            ).length
+
+            const tab = {
+                id: this.generateId(),
+                label: null,
+                customLabel: null,
+                resource: original.resource,
+                page: original.page,
+                recordId: original.recordId,
+                order: 0,
+                tabColor: original.tabColor,
+                tabBackground: original.tabBackground,
+                tabTextColor: original.tabTextColor,
+                hoverCard: original.hoverCard,
+                confirmOnClose: original.confirmOnClose,
+                closeOnSave: original.closeOnSave,
+            }
+
+            tab.label = this.generateLabel(tab) + ` (${dupeCount + 1})`
+
+            // Insert right after the original
+            this.tabs.splice(originalIndex + 1, 0, tab)
+            this.reindex()
+
+            this.activeTabId = tab.id
+            this.togglePageContent()
+
+            this.saveToStorage()
+            this.wireSyncTabs()
+            this.$nextTick(() => this.recalcOverflow())
+
+            this.$dispatch('tabbed:tab-opened', { tab })
+
+            return tab
+        },
+
         removeTab(tabId) {
             const tab = this.tabs.find(t => t.id === tabId)
             if (!tab) return
@@ -1180,6 +1227,9 @@ export default function tabbedManager(config = {}) {
                     break
                 case 'unpin':
                     this.unpinTab(tabId)
+                    break
+                case 'duplicate':
+                    this.duplicateTab(tabId)
                     break
                 case 'rename':
                     this.startRename(tabId)

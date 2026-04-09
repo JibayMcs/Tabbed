@@ -25,6 +25,7 @@ A FilamentPHP v5 plugin that brings IDE/browser-style tabs to your panel. Open r
 - Post-save redirect interception (stay in tab after save, create-to-edit transformation)
 - Pinned tabs (anchored left, protected from bulk close, visually distinct)
 - Tab search in overflow/dropdown menu (filter by name, keyboard navigation)
+- Tab duplication via context menu
 - Dark mode support
 - Translations: English, French & Spanish
 
@@ -335,6 +336,10 @@ The close button (x) still works on pinned tabs — pinning protects against bul
 ### Tab search
 
 When the overflow dropdown (or dropdown mode menu) contains 5 or more tabs, a search field appears at the top. Type to filter tabs by name in real time (case-insensitive, partial match). Use arrow keys to navigate results and Enter to activate the highlighted tab. Escape clears the search, or closes the menu if the search is already empty.
+
+### Tab duplication
+
+Right-click a tab and select "Duplicate" to open the same resource/page/record in a new tab. The duplicate opens right after the original with a numbered suffix (e.g. "User #5 (2)"). Colors, hover card, and other settings are copied from the original.
 
 ### Config file
 

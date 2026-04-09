@@ -10,6 +10,7 @@ return [
     'all_tabs' => 'Todas las pestañas',
     'unsaved_changes' => 'Cambios sin guardar',
     'unsaved_changes_description' => 'Esta pestaña contiene cambios sin guardar. ¿Estás seguro de que quieres cerrarla?',
+    'duplicate' => 'Duplicar',
     'pin' => 'Fijar',
     'unpin' => 'Desfijar',
     'search_tabs' => 'Buscar pestañas...',

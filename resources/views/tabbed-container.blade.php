@@ -265,6 +265,10 @@
                 <span>{{ __('tabbed::tabbed.unpin') }}</span>
             </button>
         </template>
+        <button type="button" class="fi-tabbed-context-menu-item" @click="contextMenuAction('duplicate')">
+            <x-filament::icon icon="heroicon-m-document-duplicate" class="fi-tabbed-context-menu-icon" />
+            <span>{{ __('tabbed::tabbed.duplicate') }}</span>
+        </button>
         <button type="button" class="fi-tabbed-context-menu-item" @click="contextMenuAction('rename')">
             <x-filament::icon icon="heroicon-m-pencil-square" class="fi-tabbed-context-menu-icon" />
             <span>{{ __('tabbed::tabbed.rename') }}</span>
