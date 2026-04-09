@@ -44,6 +44,14 @@ export default function tabbedManager(config = {}) {
         // Redirect interception
         interceptRedirects: config.interceptRedirects ?? true,
 
+        // Feature permissions (global)
+        allowReorder: config.allowReorder ?? true,
+        allowRename: config.allowRename ?? true,
+        allowPin: config.allowPin ?? true,
+        allowDuplicate: config.allowDuplicate ?? true,
+        allowCloseOthers: config.allowCloseOthers ?? true,
+        allowCloseAll: config.allowCloseAll ?? true,
+
         // Dirty state
         dirtyTabIds: [],
         confirmClose: config.confirmClose ?? false,
@@ -427,7 +435,7 @@ export default function tabbedManager(config = {}) {
 
         pinTab(tabId) {
             const tab = this.tabs.find(t => t.id === tabId)
-            if (!tab || tab.pinned) return
+            if (!tab || tab.pinned || !this.canPin(tab)) return
 
             tab.pinned = true
 
@@ -466,7 +474,7 @@ export default function tabbedManager(config = {}) {
             this.$nextTick(() => this.recalcOverflow())
         },
 
-        addTab({ resource, page, recordId = null, label = null, background = false, tabColor = null, tabBackground = null, tabTextColor = null, hoverCard = null, confirmOnClose = false, closeOnSave = false }) {
+        addTab({ resource, page, recordId = null, label = null, background = false, tabColor = null, tabBackground = null, tabTextColor = null, hoverCard = null, confirmOnClose = false, closeOnSave = false, canReorder, canRename, canPin, canDuplicate, canClose }) {
             const existing = this.tabs.find(t =>
                 t.resource === resource &&
                 t.page === page &&
@@ -494,6 +502,11 @@ export default function tabbedManager(config = {}) {
                 hoverCard: hoverCard ?? null,
                 confirmOnClose: confirmOnClose,
                 closeOnSave: closeOnSave,
+                ...(canReorder === false && { canReorder: false }),
+                ...(canRename === false && { canRename: false }),
+                ...(canPin === false && { canPin: false }),
+                ...(canDuplicate === false && { canDuplicate: false }),
+                ...(canClose === false && { canClose: false }),
             }
 
             tab.label = this.generateLabel(tab)
@@ -516,7 +529,7 @@ export default function tabbedManager(config = {}) {
 
         duplicateTab(tabId) {
             const original = this.tabs.find(t => t.id === tabId)
-            if (!original) return
+            if (!original || !this.canDuplicate(original)) return
 
             const originalIndex = this.tabs.indexOf(original)
 
@@ -541,6 +554,11 @@ export default function tabbedManager(config = {}) {
                 hoverCard: original.hoverCard,
                 confirmOnClose: original.confirmOnClose,
                 closeOnSave: original.closeOnSave,
+                ...(original.canReorder === false && { canReorder: false }),
+                ...(original.canRename === false && { canRename: false }),
+                ...(original.canPin === false && { canPin: false }),
+                ...(original.canDuplicate === false && { canDuplicate: false }),
+                ...(original.canClose === false && { canClose: false }),
             }
 
             tab.label = this.generateLabel(tab) + ` (${dupeCount + 1})`
@@ -563,7 +581,7 @@ export default function tabbedManager(config = {}) {
 
         removeTab(tabId) {
             const tab = this.tabs.find(t => t.id === tabId)
-            if (!tab) return
+            if (!tab || !this.canClose(tab)) return
 
             const needsConfirm = this.isTabDirty(tabId) && (this.confirmClose || tab.confirmOnClose)
             if (needsConfirm) {
@@ -774,6 +792,28 @@ export default function tabbedManager(config = {}) {
 
         isActive(tabId) {
             return this.activeTabId === tabId
+        },
+
+        // --- Per-tab permission helpers ---
+
+        canReorder(tab) {
+            return this.allowReorder && tab.canReorder !== false
+        },
+
+        canRename(tab) {
+            return this.allowRename && tab.canRename !== false
+        },
+
+        canPin(tab) {
+            return this.allowPin && tab.canPin !== false
+        },
+
+        canDuplicate(tab) {
+            return this.allowDuplicate && tab.canDuplicate !== false
+        },
+
+        canClose(tab) {
+            return tab.canClose !== false
         },
 
         // --- Overflow Menu ---
@@ -1065,6 +1105,8 @@ export default function tabbedManager(config = {}) {
 
         onMiddleClick(e, tabId) {
             if (!this.middleClickToClose || e.button !== 1) return
+            const tab = this.tabs.find(t => t.id === tabId)
+            if (!tab || !this.canClose(tab)) return
             e.preventDefault()
             this.removeTab(tabId)
         },
@@ -1072,6 +1114,12 @@ export default function tabbedManager(config = {}) {
         // --- Drag & Drop ---
 
         onDragStart(e, tabId) {
+            const tab = this.tabs.find(t => t.id === tabId)
+            if (!tab || !this.canReorder(tab)) {
+                e.preventDefault()
+                return
+            }
+
             this.dragTabId = tabId
             e.dataTransfer.effectAllowed = 'move'
             e.dataTransfer.setData('text/plain', tabId)
@@ -1143,7 +1191,7 @@ export default function tabbedManager(config = {}) {
 
         startRename(tabId) {
             const tab = this.tabs.find(t => t.id === tabId)
-            if (!tab) return
+            if (!tab || !this.canRename(tab)) return
 
             this.renamingTabId = tabId
             this.renameValue = tab.customLabel ?? tab.label
@@ -1213,6 +1261,10 @@ export default function tabbedManager(config = {}) {
 
         get showContextMenu() {
             return this.contextMenuTabId !== null
+        },
+
+        get contextMenuTab() {
+            return this.tabs.find(t => t.id === this.contextMenuTabId) ?? null
         },
 
         contextMenuAction(action) {

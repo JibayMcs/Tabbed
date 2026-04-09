@@ -11,6 +11,12 @@
         'dropdown' => $plugin->getDropdown(),
         'confirmClose' => $plugin->getConfirmClose(),
         'interceptRedirects' => $plugin->getInterceptRedirects(),
+        'allowReorder' => $plugin->getAllowReorder(),
+        'allowRename' => $plugin->getAllowRename(),
+        'allowPin' => $plugin->getAllowPin(),
+        'allowDuplicate' => $plugin->getAllowDuplicate(),
+        'allowCloseOthers' => $plugin->getAllowCloseOthers(),
+        'allowCloseAll' => $plugin->getAllowCloseAll(),
     ];
 @endphp
 
@@ -60,6 +66,7 @@
                     <template x-for="tab in tabs" :key="tab.id">
                         <div
                             class="fi-tabbed-bar-tab"
+                            :id="'fi-tab-' + tab.id"
                             :data-tab-id="tab.id"
                             :class="{
                                 'fi-active': isActive(tab.id),
@@ -70,11 +77,12 @@
                             :style="getTabStyle(tab)"
                             role="tab"
                             :aria-selected="isActive(tab.id)"
+                            :aria-controls="'fi-tabpanel-' + tab.id"
                             @click="setActiveTab(tab.id)"
                             @auxclick="onMiddleClick($event, tab.id)"
                             @contextmenu="openContextMenu($event, tab.id)"
-                            @dblclick="startRename(tab.id)"
-                            draggable="true"
+                            @dblclick="canRename(tab) && startRename(tab.id)"
+                            :draggable="canReorder(tab)"
                             @dragstart="onDragStart($event, tab.id)"
                             @dragend="onDragEnd($event)"
                             @dragover="onDragOver($event, tab.id)"
@@ -128,17 +136,19 @@
                                 <span class="fi-tabbed-bar-tab-dirty"></span>
                             </template>
 
-                            <button
-                                type="button"
-                                class="fi-tabbed-bar-tab-close"
-                                @click.stop="removeTab(tab.id)"
-                                aria-label="{{ __('tabbed::tabbed.close_tab') }}"
-                            >
-                                <x-filament::icon
-                                    icon="heroicon-m-x-mark"
-                                    class="fi-tabbed-bar-tab-close-icon"
-                                />
-                            </button>
+                            <template x-if="canClose(tab)">
+                                <button
+                                    type="button"
+                                    class="fi-tabbed-bar-tab-close"
+                                    @click.stop="removeTab(tab.id)"
+                                    aria-label="{{ __('tabbed::tabbed.close_tab') }}"
+                                >
+                                    <x-filament::icon
+                                        icon="heroicon-m-x-mark"
+                                        class="fi-tabbed-bar-tab-close-icon"
+                                    />
+                                </button>
+                            </template>
                         </div>
                     </template>
                 </div>
@@ -213,17 +223,19 @@
                     <template x-if="isTabDirty(tab.id)">
                         <span class="fi-tabbed-bar-tab-dirty"></span>
                     </template>
-                    <button
-                        type="button"
-                        class="fi-tabbed-overflow-menu-item-close"
-                        @click.stop="removeTab(tab.id)"
-                        aria-label="{{ __('tabbed::tabbed.close_tab') }}"
-                    >
-                        <x-filament::icon
-                            icon="heroicon-m-x-mark"
-                            class="fi-tabbed-overflow-menu-item-close-icon"
-                        />
-                    </button>
+                    <template x-if="canClose(tab)">
+                        <button
+                            type="button"
+                            class="fi-tabbed-overflow-menu-item-close"
+                            @click.stop="removeTab(tab.id)"
+                            aria-label="{{ __('tabbed::tabbed.close_tab') }}"
+                        >
+                            <x-filament::icon
+                                icon="heroicon-m-x-mark"
+                                class="fi-tabbed-overflow-menu-item-close-icon"
+                            />
+                        </button>
+                    </template>
                 </div>
             </template>
         </div>
@@ -253,39 +265,51 @@
         :style="`left: ${contextMenuX}px; top: ${contextMenuY}px`"
         @click.stop
     >
-        <template x-if="!isTabPinned(contextMenuTabId)">
+        <template x-if="contextMenuTab && canPin(contextMenuTab) && !isTabPinned(contextMenuTabId)">
             <button type="button" class="fi-tabbed-context-menu-item" @click="contextMenuAction('pin')">
                 <x-filament::icon icon="heroicon-m-map-pin" class="fi-tabbed-context-menu-icon" />
                 <span>{{ __('tabbed::tabbed.pin') }}</span>
             </button>
         </template>
-        <template x-if="isTabPinned(contextMenuTabId)">
+        <template x-if="contextMenuTab && canPin(contextMenuTab) && isTabPinned(contextMenuTabId)">
             <button type="button" class="fi-tabbed-context-menu-item" @click="contextMenuAction('unpin')">
                 <x-filament::icon icon="heroicon-m-map-pin" class="fi-tabbed-context-menu-icon" />
                 <span>{{ __('tabbed::tabbed.unpin') }}</span>
             </button>
         </template>
-        <button type="button" class="fi-tabbed-context-menu-item" @click="contextMenuAction('duplicate')">
-            <x-filament::icon icon="heroicon-m-document-duplicate" class="fi-tabbed-context-menu-icon" />
-            <span>{{ __('tabbed::tabbed.duplicate') }}</span>
-        </button>
-        <button type="button" class="fi-tabbed-context-menu-item" @click="contextMenuAction('rename')">
-            <x-filament::icon icon="heroicon-m-pencil-square" class="fi-tabbed-context-menu-icon" />
-            <span>{{ __('tabbed::tabbed.rename') }}</span>
-        </button>
-        <button type="button" class="fi-tabbed-context-menu-item" @click="contextMenuAction('close')">
-            <x-filament::icon icon="heroicon-m-x-mark" class="fi-tabbed-context-menu-icon" />
-            <span>{{ __('tabbed::tabbed.close') }}</span>
-        </button>
-        <div class="fi-tabbed-context-menu-separator"></div>
-        <button type="button" class="fi-tabbed-context-menu-item" @click="contextMenuAction('close-others')">
-            <x-filament::icon icon="heroicon-m-x-circle" class="fi-tabbed-context-menu-icon" />
-            <span>{{ __('tabbed::tabbed.close_others') }}</span>
-        </button>
-        <button type="button" class="fi-tabbed-context-menu-item fi-tabbed-context-menu-item-danger" @click="contextMenuAction('close-all')">
-            <x-filament::icon icon="heroicon-m-trash" class="fi-tabbed-context-menu-icon" />
-            <span>{{ __('tabbed::tabbed.close_all') }}</span>
-        </button>
+        <template x-if="contextMenuTab && canDuplicate(contextMenuTab)">
+            <button type="button" class="fi-tabbed-context-menu-item" @click="contextMenuAction('duplicate')">
+                <x-filament::icon icon="heroicon-m-document-duplicate" class="fi-tabbed-context-menu-icon" />
+                <span>{{ __('tabbed::tabbed.duplicate') }}</span>
+            </button>
+        </template>
+        <template x-if="contextMenuTab && canRename(contextMenuTab)">
+            <button type="button" class="fi-tabbed-context-menu-item" @click="contextMenuAction('rename')">
+                <x-filament::icon icon="heroicon-m-pencil-square" class="fi-tabbed-context-menu-icon" />
+                <span>{{ __('tabbed::tabbed.rename') }}</span>
+            </button>
+        </template>
+        <template x-if="contextMenuTab && canClose(contextMenuTab)">
+            <button type="button" class="fi-tabbed-context-menu-item" @click="contextMenuAction('close')">
+                <x-filament::icon icon="heroicon-m-x-mark" class="fi-tabbed-context-menu-icon" />
+                <span>{{ __('tabbed::tabbed.close') }}</span>
+            </button>
+        </template>
+        <template x-if="allowCloseOthers || allowCloseAll">
+            <div class="fi-tabbed-context-menu-separator"></div>
+        </template>
+        <template x-if="allowCloseOthers">
+            <button type="button" class="fi-tabbed-context-menu-item" @click="contextMenuAction('close-others')">
+                <x-filament::icon icon="heroicon-m-x-circle" class="fi-tabbed-context-menu-icon" />
+                <span>{{ __('tabbed::tabbed.close_others') }}</span>
+            </button>
+        </template>
+        <template x-if="allowCloseAll">
+            <button type="button" class="fi-tabbed-context-menu-item fi-tabbed-context-menu-item-danger" @click="contextMenuAction('close-all')">
+                <x-filament::icon icon="heroicon-m-trash" class="fi-tabbed-context-menu-icon" />
+                <span>{{ __('tabbed::tabbed.close_all') }}</span>
+            </button>
+        </template>
     </div>
 
     {{-- Dirty close confirmation modal --}}
@@ -342,10 +366,14 @@
 
         @if($pageClass && $isLoaded)
             <div
+                id="fi-tabpanel-{{ $tab['id'] }}"
                 x-show="isActive('{{ $tab['id'] }}')"
                 wire:key="tab-panel-{{ $tab['id'] }}"
                 wire:ignore
                 class="fi-tabbed-panel"
+                role="tabpanel"
+                aria-labelledby="fi-tab-{{ $tab['id'] }}"
+                tabindex="0"
             >
                 @if(in_array($tab['page'] ?? '', ['edit', 'view']))
                     @livewire($pageClass, ['record' => $tab['recordId']], key('tabbed-page-' . $tab['id']))

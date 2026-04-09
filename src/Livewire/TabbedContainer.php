@@ -8,9 +8,11 @@ use Livewire\Component;
 
 class TabbedContainer extends Component
 {
-    public static bool $barRendered = false;
+    /** @var array<string, bool> Tracks which panels have rendered the bar portal */
+    public static array $barRenderedFor = [];
 
-    public static bool $contentRendered = false;
+    /** @var array<string, bool> Tracks which panels have rendered the content */
+    public static array $contentRenderedFor = [];
 
     public array $tabs = [];
 
@@ -95,7 +97,13 @@ class TabbedContainer extends Component
             return null;
         }
 
-        $pages = $resource::getPages();
+        try {
+            $pages = $resource::getPages();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return null;
+        }
 
         if (! isset($pages[$page])) {
             return null;

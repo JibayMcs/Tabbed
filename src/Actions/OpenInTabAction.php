@@ -32,6 +32,16 @@ class OpenInTabAction extends Action
 
     protected bool $closeOnSave = false;
 
+    protected \Closure|bool $canReorder = true;
+
+    protected \Closure|bool $canRename = true;
+
+    protected \Closure|bool $canPin = true;
+
+    protected \Closure|bool $canDuplicate = true;
+
+    protected \Closure|bool $canClose = true;
+
     public static function getDefaultName(): ?string
     {
         return 'tabbed';
@@ -94,6 +104,16 @@ class OpenInTabAction extends Action
 
         if ($this->closeOnSave) {
             $data['closeOnSave'] = true;
+        }
+
+        // Resolve per-tab permissions (only include if false to keep payload lean)
+        foreach (['canReorder', 'canRename', 'canPin', 'canDuplicate', 'canClose'] as $perm) {
+            $value = $this->{$perm};
+            $resolved = $value instanceof \Closure ? $value($record) : $value;
+
+            if (! $resolved) {
+                $data[$perm] = false;
+            }
         }
 
         if ($this->hasHoverCard && $this->hoverCardContentCallback) {
@@ -161,6 +181,41 @@ class OpenInTabAction extends Action
     public function closeOnSave(bool $condition = true): static
     {
         $this->closeOnSave = $condition;
+
+        return $this;
+    }
+
+    public function canReorder(\Closure|bool $condition = true): static
+    {
+        $this->canReorder = $condition;
+
+        return $this;
+    }
+
+    public function canRename(\Closure|bool $condition = true): static
+    {
+        $this->canRename = $condition;
+
+        return $this;
+    }
+
+    public function canPin(\Closure|bool $condition = true): static
+    {
+        $this->canPin = $condition;
+
+        return $this;
+    }
+
+    public function canDuplicate(\Closure|bool $condition = true): static
+    {
+        $this->canDuplicate = $condition;
+
+        return $this;
+    }
+
+    public function canClose(\Closure|bool $condition = true): static
+    {
+        $this->canClose = $condition;
 
         return $this;
     }

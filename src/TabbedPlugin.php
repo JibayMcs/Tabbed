@@ -42,6 +42,18 @@ class TabbedPlugin implements Plugin
 
     protected bool $dropdownOutlined = false;
 
+    protected bool $allowReorder = true;
+
+    protected bool $allowRename = true;
+
+    protected bool $allowPin = true;
+
+    protected bool $allowDuplicate = true;
+
+    protected bool $allowCloseOthers = true;
+
+    protected bool $allowCloseAll = true;
+
     public function getId(): string
     {
         return 'tabbed';
@@ -49,15 +61,17 @@ class TabbedPlugin implements Plugin
 
     public function register(Panel $panel): void
     {
+        $panelId = $panel->getId();
+
         // Tab bar portal target — rendered at user-configured hook position
         $panel->renderHook(
             $this->getRenderHook(),
-            function (): HtmlString|string {
-                if (TabbedContainer::$barRendered) {
+            function () use ($panelId): HtmlString|string {
+                if (TabbedContainer::$barRenderedFor[$panelId] ?? false) {
                     return '';
                 }
 
-                TabbedContainer::$barRendered = true;
+                TabbedContainer::$barRenderedFor[$panelId] = true;
 
                 return new HtmlString('<div id="fi-tabbed-bar-portal" wire:ignore></div>');
             },
@@ -66,12 +80,12 @@ class TabbedPlugin implements Plugin
         // Tab content panels — always rendered at CONTENT_START (inside <main class="fi-main">)
         $panel->renderHook(
             PanelsRenderHook::CONTENT_START,
-            function (): \Illuminate\Contracts\View\View|string {
-                if (TabbedContainer::$contentRendered) {
+            function () use ($panelId): \Illuminate\Contracts\View\View|string {
+                if (TabbedContainer::$contentRenderedFor[$panelId] ?? false) {
                     return '';
                 }
 
-                TabbedContainer::$contentRendered = true;
+                TabbedContainer::$contentRenderedFor[$panelId] = true;
 
                 return view('tabbed::tab-bar');
             },
@@ -242,6 +256,78 @@ class TabbedPlugin implements Plugin
     public function getDropdownOutlined(): bool
     {
         return $this->dropdownOutlined;
+    }
+
+    public function allowReorder(bool $condition = true): static
+    {
+        $this->allowReorder = $condition;
+
+        return $this;
+    }
+
+    public function getAllowReorder(): bool
+    {
+        return $this->allowReorder;
+    }
+
+    public function allowRename(bool $condition = true): static
+    {
+        $this->allowRename = $condition;
+
+        return $this;
+    }
+
+    public function getAllowRename(): bool
+    {
+        return $this->allowRename;
+    }
+
+    public function allowPin(bool $condition = true): static
+    {
+        $this->allowPin = $condition;
+
+        return $this;
+    }
+
+    public function getAllowPin(): bool
+    {
+        return $this->allowPin;
+    }
+
+    public function allowDuplicate(bool $condition = true): static
+    {
+        $this->allowDuplicate = $condition;
+
+        return $this;
+    }
+
+    public function getAllowDuplicate(): bool
+    {
+        return $this->allowDuplicate;
+    }
+
+    public function allowCloseOthers(bool $condition = true): static
+    {
+        $this->allowCloseOthers = $condition;
+
+        return $this;
+    }
+
+    public function getAllowCloseOthers(): bool
+    {
+        return $this->allowCloseOthers;
+    }
+
+    public function allowCloseAll(bool $condition = true): static
+    {
+        $this->allowCloseAll = $condition;
+
+        return $this;
+    }
+
+    public function getAllowCloseAll(): bool
+    {
+        return $this->allowCloseAll;
     }
 
     public static function make(): static

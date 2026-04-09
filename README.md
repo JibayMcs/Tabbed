@@ -26,6 +26,7 @@ A FilamentPHP v5 plugin that brings IDE/browser-style tabs to your panel. Open r
 - Pinned tabs (anchored left, protected from bulk close, visually distinct)
 - Tab search in overflow/dropdown menu (filter by name, keyboard navigation)
 - Tab duplication via context menu
+- Granular permissions (global + per-tab with `$record` closures)
 - Dark mode support
 - Translations: English, French & Spanish
 
@@ -130,6 +131,21 @@ OpenInTabAction::make()
     ->closeOnSave()                                   // Auto-close the tab after a successful save
 ```
 
+### Per-tab permissions
+
+Control what users can do with individual tabs. Accepts `bool` or a `Closure` receiving `$record` for conditional logic:
+
+```php
+OpenInTabAction::make()
+    ->canReorder(false)                               // Prevent drag & drop for this tab
+    ->canRename(fn ($record) => $record->is_editable) // Conditional rename
+    ->canPin(fn ($record) => $record->is_important)   // Conditional pin
+    ->canDuplicate(true)                              // Allow duplication (default)
+    ->canClose(fn ($record) => ! $record->is_locked)  // Prevent closing locked records
+```
+
+Per-tab permissions combine with global settings (`allowReorder`, `allowRename`, etc.) on `TabbedPlugin`. The global setting is the master switch: if it's off, the per-tab setting is ignored. If the global is on, the per-tab closure decides.
+
 ### Tab colors
 
 Customize tab appearance per action. Accepts Filament `Color` palettes, hex values, or any CSS color string:
@@ -185,6 +201,8 @@ OpenInTabAction::make()
 
 Available positions: `Top`, `TopStart`, `TopEnd`, `Bottom`, `BottomStart`, `BottomEnd`, `Left`, `Right`.
 
+> **Security note:** Hover card content is rendered as raw HTML (`x-html`). If you include user-provided data, make sure to escape it with `e()` or `htmlspecialchars()` to prevent XSS vulnerabilities.
+
 The hover card stays visible when moving the cursor from the tab to the card. It also works on overflow dropdown items.
 
 ### JavaScript events
@@ -236,6 +254,12 @@ TabbedPlugin::make()
     ->destroyInactive()                                     // Destroy inactive tab components to save memory (default: off)
     ->confirmClose()                                        // Confirm before closing tabs with unsaved changes (default: off)
     ->interceptRedirects()                                  // Block post-save redirects inside tabs (default: on)
+    ->allowReorder(false)                                   // Disable drag & drop reordering (default: on)
+    ->allowRename(false)                                    // Disable inline tab renaming (default: on)
+    ->allowPin(false)                                       // Disable tab pinning (default: on)
+    ->allowDuplicate(false)                                 // Disable tab duplication (default: on)
+    ->allowCloseOthers(false)                               // Hide "Close others" from context menu (default: on)
+    ->allowCloseAll(false)                                  // Hide "Close all" from context menu (default: on)
 ```
 
 ### Performance: Lazy loading & destroy inactive
