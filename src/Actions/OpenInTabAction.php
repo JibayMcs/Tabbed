@@ -22,11 +22,11 @@ class OpenInTabAction extends Action
 
     protected ?\Closure $tabNameCallback = null;
 
-    protected ?string $tabColor = null;
+    protected \Closure|string|array|null $tabColor = null;
 
-    protected ?string $tabBackground = null;
+    protected \Closure|string|array|null $tabBackground = null;
 
-    protected ?string $tabTextColor = null;
+    protected \Closure|string|array|null $tabTextColor = null;
 
     protected bool $confirmOnClose = false;
 
@@ -86,16 +86,19 @@ class OpenInTabAction extends Action
             }
         }
 
-        if ($this->tabColor) {
-            $data['tabColor'] = $this->tabColor;
+        if ($this->tabColor !== null) {
+            $color = $this->tabColor instanceof \Closure ? ($this->tabColor)($record) : $this->tabColor;
+            $data['tabColor'] = $this->resolveColor($color, 500);
         }
 
-        if ($this->tabBackground) {
-            $data['tabBackground'] = $this->tabBackground;
+        if ($this->tabBackground !== null) {
+            $color = $this->tabBackground instanceof \Closure ? ($this->tabBackground)($record) : $this->tabBackground;
+            $data['tabBackground'] = $this->resolveColor($color, 50);
         }
 
-        if ($this->tabTextColor) {
-            $data['tabTextColor'] = $this->tabTextColor;
+        if ($this->tabTextColor !== null) {
+            $color = $this->tabTextColor instanceof \Closure ? ($this->tabTextColor)($record) : $this->tabTextColor;
+            $data['tabTextColor'] = $this->resolveColor($color, 700);
         }
 
         if ($this->confirmOnClose) {
@@ -227,23 +230,23 @@ class OpenInTabAction extends Action
         return $this;
     }
 
-    public function tabColor(string|array $color): static
+    public function tabColor(\Closure|string|array $color): static
     {
-        $this->tabColor = $this->resolveColor($color, 500);
+        $this->tabColor = $color;
 
         return $this;
     }
 
-    public function tabBackground(string|array $color): static
+    public function tabBackground(\Closure|string|array $color): static
     {
-        $this->tabBackground = $this->resolveColor($color, 50);
+        $this->tabBackground = $color;
 
         return $this;
     }
 
-    public function tabTextColor(string|array $color): static
+    public function tabTextColor(\Closure|string|array $color): static
     {
-        $this->tabTextColor = $this->resolveColor($color, 700);
+        $this->tabTextColor = $color;
 
         return $this;
     }
