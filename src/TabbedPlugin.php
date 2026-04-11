@@ -382,9 +382,14 @@ class TabbedPlugin implements Plugin
 
     public static function get(): static
     {
-        /** @var static $plugin */
-        $plugin = filament(app(static::class)->getId());
+        try {
+            /** @var static $plugin */
+            $plugin = filament(app(static::class)->getId());
 
-        return $plugin;
+            return $plugin;
+        } catch (\Throwable $e) {
+            // Plugin not registered on current panel — return a default instance
+            return app(static::class);
+        }
     }
 }

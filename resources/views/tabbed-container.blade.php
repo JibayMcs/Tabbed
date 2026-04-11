@@ -1,5 +1,9 @@
 @php
-    $plugin = \JibayMcs\Tabbed\TabbedPlugin::get();
+    try {
+        $plugin = \JibayMcs\Tabbed\TabbedPlugin::get();
+    } catch (\Throwable $e) {
+        return;
+    }
     $config = [
         'persistKey' => $plugin->getPersistKey(),
         'defaultPage' => $plugin->getDefaultPage(),

@@ -82,23 +82,39 @@ class OpenInTabAction extends Action
             $data['recordId'] = $record->getKey();
 
             if ($this->tabNameCallback) {
-                $data['label'] = ($this->tabNameCallback)($record);
+                try {
+                    $data['label'] = ($this->tabNameCallback)($record);
+                } catch (\Throwable $e) {
+                    // Callback failed — use default label
+                }
             }
         }
 
         if ($this->tabColor !== null) {
-            $color = $this->tabColor instanceof \Closure ? ($this->tabColor)($record) : $this->tabColor;
-            $data['tabColor'] = $this->resolveColor($color, 500);
+            try {
+                $color = $this->tabColor instanceof \Closure ? ($this->tabColor)($record) : $this->tabColor;
+                $data['tabColor'] = $this->resolveColor($color, 500);
+            } catch (\Throwable $e) {
+                // Color resolution failed — skip
+            }
         }
 
         if ($this->tabBackground !== null) {
-            $color = $this->tabBackground instanceof \Closure ? ($this->tabBackground)($record) : $this->tabBackground;
-            $data['tabBackground'] = $this->resolveColor($color, 50);
+            try {
+                $color = $this->tabBackground instanceof \Closure ? ($this->tabBackground)($record) : $this->tabBackground;
+                $data['tabBackground'] = $this->resolveColor($color, 50);
+            } catch (\Throwable $e) {
+                // Background resolution failed — skip
+            }
         }
 
         if ($this->tabTextColor !== null) {
-            $color = $this->tabTextColor instanceof \Closure ? ($this->tabTextColor)($record) : $this->tabTextColor;
-            $data['tabTextColor'] = $this->resolveColor($color, 700);
+            try {
+                $color = $this->tabTextColor instanceof \Closure ? ($this->tabTextColor)($record) : $this->tabTextColor;
+                $data['tabTextColor'] = $this->resolveColor($color, 700);
+            } catch (\Throwable $e) {
+                // Text color resolution failed — skip
+            }
         }
 
         if ($this->confirmOnClose) {
@@ -120,20 +136,24 @@ class OpenInTabAction extends Action
         }
 
         if ($this->hasHoverCard && $this->hoverCardContentCallback) {
-            $content = ($this->hoverCardContentCallback)($record);
+            try {
+                $content = ($this->hoverCardContentCallback)($record);
 
-            if ($content instanceof View) {
-                $content = $content->render();
-            } elseif ($content instanceof HtmlString) {
-                $content = $content->toHtml();
+                if ($content instanceof View) {
+                    $content = $content->render();
+                } elseif ($content instanceof HtmlString) {
+                    $content = $content->toHtml();
+                }
+
+                $data['hoverCard'] = [
+                    'content' => (string) $content,
+                    'position' => $this->hoverCardPosition->value,
+                    'delay' => $this->hoverCardDelay,
+                    'leaveDelay' => $this->hoverCardLeaveDelay,
+                ];
+            } catch (\Throwable $e) {
+                // Hover card rendering failed — skip
             }
-
-            $data['hoverCard'] = [
-                'content' => (string) $content,
-                'position' => $this->hoverCardPosition->value,
-                'delay' => $this->hoverCardDelay,
-                'leaveDelay' => $this->hoverCardLeaveDelay,
-            ];
         }
 
         $jsData = $hasJsData ? Js::from($data) : $data;
