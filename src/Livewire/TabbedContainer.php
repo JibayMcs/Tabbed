@@ -79,8 +79,12 @@ class TabbedContainer extends Component
             $icon = $resource::getNavigationIcon();
 
             if ($icon) {
-                $iconName = $icon instanceof \BackedEnum ? "heroicon-{$icon->value}" : $icon;
-                $icons[$resource] = svg($iconName, 'fi-tabbed-bar-tab-icon')->toHtml();
+                try {
+                    $iconName = $icon instanceof \BackedEnum ? "heroicon-{$icon->value}" : $icon;
+                    $icons[$resource] = svg($iconName, 'fi-tabbed-bar-tab-icon')->toHtml();
+                } catch (\Throwable $e) {
+                    // Icon not found or invalid — skip silently
+                }
             }
         }
 
