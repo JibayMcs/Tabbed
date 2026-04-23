@@ -3,9 +3,7 @@
 namespace JibayMcs\Tabbed\Actions;
 
 use Filament\Actions\Action;
-use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\HtmlString;
 use Illuminate\Support\Js;
 use JibayMcs\Tabbed\Traits\HasHoverCard;
 use JibayMcs\Tabbed\TabbedPlugin;
@@ -14,6 +12,7 @@ use Livewire\Livewire;
 class OpenInTabAction extends Action
 {
     use HasHoverCard;
+
     protected ?string $tabbedPage = null;
 
     protected ?string $tabbedResource = null;
@@ -55,7 +54,7 @@ class OpenInTabAction extends Action
         $this->icon('heroicon-m-arrow-top-right-on-square');
         $this->color('gray');
 
-        $this->action(function (?Model $record = null, Action $action) {
+        $this->action(function (Action $action, ?Model $record = null) {
             $data = $this->constructTabData($record, false);
             $action->getLivewire()->dispatch('tabbed:open', ...$data);
         });
@@ -130,30 +129,19 @@ class OpenInTabAction extends Action
             $value = $this->{$perm};
             $resolved = $value instanceof \Closure ? $value($record) : $value;
 
-            if (! $resolved) {
+            if (!$resolved) {
                 $data[$perm] = false;
             }
         }
 
-        if ($this->hasHoverCard && $this->hoverCardContentCallback) {
-            try {
-                $content = ($this->hoverCardContentCallback)($record);
-
-                if ($content instanceof View) {
-                    $content = $content->render();
-                } elseif ($content instanceof HtmlString) {
-                    $content = $content->toHtml();
-                }
-
-                $data['hoverCard'] = [
-                    'content' => (string) $content,
-                    'position' => $this->hoverCardPosition->value,
-                    'delay' => $this->hoverCardDelay,
-                    'leaveDelay' => $this->hoverCardLeaveDelay,
-                ];
-            } catch (\Throwable $e) {
-                // Hover card rendering failed — skip
-            }
+        $hoverContent = $this->resolveHoverCardContent($record);
+        if ($hoverContent !== null) {
+            $data['hoverCard'] = [
+                'content' => $hoverContent,
+                'position' => $this->hoverCardPosition->value,
+                'delay' => $this->hoverCardDelay,
+                'leaveDelay' => $this->hoverCardLeaveDelay,
+            ];
         }
 
         $jsData = $hasJsData ? Js::from($data) : $data;
