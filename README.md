@@ -126,12 +126,41 @@ OpenInTabAction::make()
     ->background()                                    // Open tab without switching to it
     ->tabName(fn ($record) => $record->name)          // Custom tab label
     ->resource(UserResource::class)                   // Explicit resource (auto-detected by default)
+    ->openFor(fn ($record) => $record->author)        // Resolve target record from parent context (see below)
     ->tabColor(Color::Red)                            // Accent color (left border indicator)
     ->tabBackground(Color::Red)                       // Background color
     ->tabTextColor(Color::Red)                        // Text color
     ->confirmOnClose()                                // Ask confirmation before closing if dirty
     ->closeOnSave()                                   // Auto-close the tab after a successful save
 ```
+
+### Opening a related record (`openFor`)
+
+`OpenInTabAction` opens the page of the record bound to its surrounding context — the row's record on a table, the page's record on an infolist Section, etc. That's almost always what you want.
+
+But when the action lives **inside the page of one model** and you want it to open **a related model**, the bound record (the parent) and the target record are different. Without help, the action would call `$parent->getKey()` and try to open the target page with the parent's id — which 404s silently because that id doesn't exist in the target table.
+
+The `openFor()` callback solves this. It receives the Filament-injected parent record and returns the actual record whose page should open. From that point on, every downstream callback (`tabName`, `hoverCardContent`, `tabColor`, …) receives the **resolved** record — so you can write attribute reads naturally without manually walking the relation each time.
+
+**When to use it:** any time the action's target resource is different from the page/row's resource. Typical example — a "View contact" button in the Contact section of a Ticket infolist:
+
+```php
+use App\Filament\Resources\Contacts\ContactResource;
+use App\Models\Ticket;
+
+OpenInTabAction::make()
+    ->resource(ContactResource::class)                // The tab opens a Contact…
+    ->tabbedPage('view')
+    ->openFor(fn (Ticket $record) => $record->contact) // …resolved from the parent Ticket
+    ->visible(fn (Ticket $record) => $record->contact !== null) // Hide when no contact linked
+    ->tabName(fn ($record) => $record->fullname);     // $record here = the resolved Contact
+```
+
+**When NOT to use it:** when the action sits on a row of the target resource's table, or in any context where the bound `$record` is already the model you want to open. The default behaviour is correct — `openFor` adds no value and just adds noise.
+
+**Edge cases:**
+- If the relation may be `null` (optional belongsTo), gate the action with `->visible(...)` as shown above. Opening a tab without a record id falls through to mounting the page with `null` and produces another 404.
+- If the resolver throws (typo on the relation name, etc.), the action falls back to the parent record rather than crashing the page — you'll see the same 404 you had before, but the surrounding UI keeps working.
 
 ### Per-tab permissions
 

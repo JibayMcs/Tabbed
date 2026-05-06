@@ -21,6 +21,24 @@ class OpenInTabAction extends Action
 
     protected ?\Closure $tabNameCallback = null;
 
+    /**
+     * Optional resolver invoked with the Filament-injected `$record` (the
+     * parent record bound by the surrounding context — e.g. the Ticket when
+     * the action lives in a `Section::footer()` of a Ticket infolist) and
+     * returning the **target** record to open in a tab.
+     *
+     * Use case: opening a related model in a tab from the parent's view page.
+     * Without this resolver the action would call `getKey()` on the parent
+     * record, producing a 404 when the resource doesn't match (e.g. opening
+     * a Contact tab using a Ticket's id).
+     *
+     *     OpenInTabAction::make()
+     *         ->resource(ContactResource::class)
+     *         ->openFor(fn ($record) => $record->contact)
+     *         ->tabName(fn ($record) => $record->fullname); // $record = Contact
+     */
+    protected ?\Closure $recordResolver = null;
+
     protected \Closure|string|array|null $tabColor = null;
 
     protected \Closure|string|array|null $tabBackground = null;
@@ -76,6 +94,25 @@ class OpenInTabAction extends Action
             'page' => $page,
             'background' => !$this->shouldActivate,
         ];
+
+        // Resolve the **target** record from the Filament-injected parent
+        // record if a `->openFor()` callback was provided. All downstream
+        // callbacks (tabName, hoverCard, colors) receive the resolved record
+        // so they can read the target model's attributes directly.
+        // The user is expected to gate the action with `->visible()` when
+        // the relation might be null; an unresolved record here falls back
+        // to the parent (preserving the legacy behaviour).
+        if ($record && $this->recordResolver) {
+            try {
+                $resolved = ($this->recordResolver)($record);
+                if ($resolved instanceof Model) {
+                    $record = $resolved;
+                }
+            } catch (\Throwable $e) {
+                // Resolver crashed — keep the parent record to avoid
+                // silently breaking the action.
+            }
+        }
 
         if ($record) {
             $data['recordId'] = $record->getKey();
@@ -171,6 +208,32 @@ class OpenInTabAction extends Action
     public function tabName(\Closure $callback): static
     {
         $this->tabNameCallback = $callback;
+
+        return $this;
+    }
+
+    /**
+     * Resolve the target record from the action's parent context.
+     *
+     * The closure receives the Filament-injected `$record` (the parent record
+     * of the surrounding schema component — e.g. the Ticket when this action
+     * lives in the footer of a Ticket infolist Section) and must return the
+     * record whose `view` / `edit` page should be opened in a new tab.
+     *
+     * Without this resolver the action calls `getKey()` on the parent record,
+     * which 404s when the resource is different (e.g. opening a Contact tab
+     * with a Ticket id).
+     *
+     *     OpenInTabAction::make()
+     *         ->resource(ContactResource::class)
+     *         ->openFor(fn (Ticket $record) => $record->contact);
+     *
+     * If the closure returns `null`, the action becomes a no-op (no tab is
+     * opened) — useful when the related record may not exist.
+     */
+    public function openFor(\Closure $callback): static
+    {
+        $this->recordResolver = $callback;
 
         return $this;
     }
