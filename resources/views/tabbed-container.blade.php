@@ -87,7 +87,7 @@
                             @auxclick="onMiddleClick($event, tab.id)"
                             @contextmenu="openContextMenu($event, tab.id)"
                             @dblclick="canRename(tab) && startRename(tab.id)"
-                            :draggable="canReorder(tab)"
+                            :draggable="canReorder(tab) && !isRenaming(tab.id)"
                             @dragstart="onDragStart($event, tab.id)"
                             @dragend="onDragEnd($event)"
                             @dragover="onDragOver($event, tab.id)"
@@ -123,6 +123,7 @@
                                     x-model="renameValue"
                                     :data-rename-input="tab.id"
                                     @click.stop
+                                    @mousedown.stop
                                     @keydown.enter.prevent="confirmRename()"
                                     @keydown.escape.prevent="cancelRename()"
                                     @blur="confirmRename()"
